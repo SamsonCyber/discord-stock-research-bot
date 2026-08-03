@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Presentation pass: hero README, architecture SVG, real sample reply from offline demo.
+- Collapsed production tool inventory into `docs/PRODUCTION_TOOLS.md` (honest offline vs private-deploy split).
+- Showcase tests: assets exist; sample reply matches live `run_turn("research AAPL")`.
+
 ## 0.3.0
 
 - Correct product model: **natural language DMs → agent → tools**.

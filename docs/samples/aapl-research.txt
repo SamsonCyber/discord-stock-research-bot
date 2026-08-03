@@ -1,0 +1,22 @@
+**AAPL** research brief (`offline-demo`)
+Sector: Energy · Bias: **bullish** · Conviction: 4/5
+Ref price: `$319.46` (-1.75%) · Vol vs avg: `1.79x`
+
+**Thesis**
+AAPL shows constructive relative strength in this demo model. Watch for continuation if price holds above near support and volume stays elevated.
+
+**Catalysts**
+  • Product or segment growth narrative improving
+  • Multiple expansion if guidance holds
+  • Technical reclaim of recent range high
+
+**Risks**
+  • Earnings or guidance miss
+  • Sector rotation away from growth
+  • Break of structure under nearest support
+
+**Invalidation:** Daily close below $300.29 (demo level)
+
+_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
+
+_tools used: research_
