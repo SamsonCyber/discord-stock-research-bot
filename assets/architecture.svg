@@ -33,7 +33,7 @@
 
   <!-- header -->
   <text x="40" y="42" fill="#e2e8f0" font-family="Segoe UI, system-ui, sans-serif" font-size="20" font-weight="700">
-    Discord Stock Research Bot
+    Equity Research Agent
   </text>
   <text x="40" y="66" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="13">
     Natural language in  ·  tools run  ·  research out

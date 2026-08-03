@@ -1,15 +1,15 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="Discord Stock Research Bot banner" width="100%"/>
+  <img src="assets/banner.svg" alt="Equity Research Agent banner" width="100%"/>
 </p>
 
 <p align="center">
-  <strong>Natural language stock research on Discord.</strong><br/>
-  You talk. The agent runs tools. A research brief lands in the DM.<br/>
-  <em>Not a slash-command toy. Not a price ticker. Not live brokerage glue.</em>
+  <strong>Equity Research Agent</strong> — natural-language equity research.<br/>
+  You talk. The agent runs tools. A structured brief lands (thesis, levels, risk).<br/>
+  <em>Discord DM adapter included. Not a slash-command toy. Not brokerage glue.</em>
 </p>
 
 <p align="center">
-  <a href="https://github.com/SamsonCyber/discord-stock-research-bot/actions/workflows/ci.yml"><img src="https://github.com/SamsonCyber/discord-stock-research-bot/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <a href="https://github.com/SamsonCyber/equity-research-agent/actions/workflows/ci.yml"><img src="https://github.com/SamsonCyber/equity-research-agent/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&amp;logoColor=white" alt="Python"/>
   <img src="https://img.shields.io/badge/license-MIT-emerald" alt="MIT"/>
   <img src="https://img.shields.io/badge/UX-natural%20language%20DMs-5865F2?logo=discord&amp;logoColor=white" alt="Discord DMs"/>
@@ -34,7 +34,7 @@
 That mock is **not marketing fiction**. The reply body is generated from the same offline engine as:
 
 ```bash
-python -m discord_stock_research_bot.demo research AAPL
+python -m equity_research_agent.demo research AAPL
 ```
 
 | You say | What happens |
@@ -53,22 +53,22 @@ python -m discord_stock_research_bot.demo research AAPL
 No Discord token. No market API keys. No account.
 
 ```bash
-git clone https://github.com/SamsonCyber/discord-stock-research-bot.git
-cd discord-stock-research-bot
+git clone https://github.com/SamsonCyber/equity-research-agent.git
+cd equity-research-agent
 python -m venv .venv
 # Windows: .venv\Scripts\activate
 # POSIX:   source .venv/bin/activate
 python -m pip install -e ".[dev]"
 python -m pytest -q
-python -m discord_stock_research_bot.demo research AAPL
+python -m equity_research_agent.demo research AAPL
 ```
 
 Also:
 
 ```bash
-python -m discord_stock_research_bot.demo levels on NVDA
-python -m discord_stock_research_bot.demo "risk for TSLA"
-python -m discord_stock_research_bot.demo help
+python -m equity_research_agent.demo levels on NVDA
+python -m equity_research_agent.demo "risk for TSLA"
+python -m equity_research_agent.demo help
 ```
 
 ### Click-through demo (no install)
@@ -137,12 +137,12 @@ python scripts/build_showcase.py
 
 | Module | Role |
 |---|---|
-| [`bot.py`](src/discord_stock_research_bot/bot.py) | Discord DM gateway |
-| [`agent.py`](src/discord_stock_research_bot/agent.py) | NL turn: intent → tools → reply |
-| [`tools.py`](src/discord_stock_research_bot/tools.py) | Tool registry |
-| [`research.py`](src/discord_stock_research_bot/research.py) | Offline deterministic engine |
-| [`auth.py`](src/discord_stock_research_bot/auth.py) | Fail-closed allowlist |
-| [`demo.py`](src/discord_stock_research_bot/demo.py) | Offline CLI |
+| [`bot.py`](src/equity_research_agent/bot.py) | Discord DM gateway |
+| [`agent.py`](src/equity_research_agent/agent.py) | NL turn: intent → tools → reply |
+| [`tools.py`](src/equity_research_agent/tools.py) | Tool registry |
+| [`research.py`](src/equity_research_agent/research.py) | Offline deterministic engine |
+| [`auth.py`](src/equity_research_agent/auth.py) | Fail-closed allowlist |
+| [`demo.py`](src/equity_research_agent/demo.py) | Offline CLI |
 
 ---
 
@@ -180,7 +180,7 @@ That inventory is **documented, not shipped live here**:
 cp .env.example .env
 # STOCK_RESEARCH_DISCORD_TOKEN=...
 # STOCK_RESEARCH_ALLOWED_USER_IDS=your_id
-python -m discord_stock_research_bot.bot
+python -m equity_research_agent.bot
 ```
 
 | Variable | Required | Purpose |

@@ -435,7 +435,7 @@ def risk_snapshot(ticker: str) -> RiskSnapshot:
     )
 
 
-TOOL_HELP = """**Discord Stock Research Bot — tools**
+TOOL_HELP = """**Equity Research Agent — tools**
 
 Talk in natural language (preferred):
 • `research AAPL`

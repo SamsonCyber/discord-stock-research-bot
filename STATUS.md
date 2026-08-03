@@ -1,15 +1,15 @@
 # Status
 
-**Product:** Discord Stock Research Bot  
+**Product:** Equity Research Agent  
 **UX:** Natural language DMs → agent → research tools  
-**Package:** `discord-stock-research-bot` `0.4.0`
+**Package:** `equity-research-agent` `0.4.2`
 
 ## Shipped
 
 - DM gateway (`on_message`, allowlist, DM-only)
 - Research agent (`run_turn`: intent → tools → reply)
 - Tools: `research`, `levels`, `risk`, `list_tools`
-- Offline NL CLI demo with richer cards (sparklines, conviction bars, level ladders)
+- Offline NL CLI demo with production-shaped Discord markdown briefs
 - Known-ticker meta (AAPL → Apple / Technology, etc.)
 - Fail-closed auth
 - Front door assets: banner, Discord mock, interactive demo, architecture diagram

@@ -11,7 +11,7 @@ from .agent import run_turn
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Discord Stock Research Bot — offline NL demo. "
+            "Equity Research Agent — offline NL demo. "
             "Pass a normal research question; the agent runs tools."
         )
     )

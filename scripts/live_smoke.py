@@ -18,8 +18,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from discord_stock_research_bot.agent import run_turn  # noqa: E402
-from discord_stock_research_bot.auth import allowed_user_ids  # noqa: E402
+from equity_research_agent.agent import run_turn  # noqa: E402
+from equity_research_agent.auth import allowed_user_ids  # noqa: E402
 
 
 def _require_env(name: str) -> str:
@@ -30,7 +30,7 @@ def _require_env(name: str) -> str:
 
 
 async def _smoke() -> dict:
-    from discord_stock_research_bot.bot import bot
+    from equity_research_agent.bot import bot
 
     token = _require_env("STOCK_RESEARCH_DISCORD_TOKEN")
     allowed = allowed_user_ids()
