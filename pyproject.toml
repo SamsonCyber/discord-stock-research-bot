@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "discord-stock-research-bot"
-version = "0.3.1"
-description = "Natural-language Discord stock research bot: chat in DMs, agent runs tools"
+version = "0.4.0"
+description = "Natural-language Discord stock research bot: DM it in English, agent runs tools, research lands"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

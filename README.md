@@ -1,46 +1,56 @@
-# Discord Stock Research Bot
-
-### Talk to it like a desk analyst. It runs the tools.
-
-[![CI](https://github.com/SamsonCyber/discord-stock-research-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/SamsonCyber/discord-stock-research-bot/actions/workflows/ci.yml)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
-[![Discord](https://img.shields.io/badge/UX-natural%20language%20DMs-5865F2.svg)](https://github.com/SamsonCyber/discord-stock-research-bot)
-
-**A natural-language stock research agent for Discord.**  
-You type English. It classifies intent, runs research tools, and answers with a structured brief. No slash-command menu. No brokerage. No fake live quotes pretending to be production.
-
-```bash
-# try it in 10 seconds (no Discord token, no market API keys)
-pip install -e ".[dev]"
-python -m discord_stock_research_bot.demo research AAPL
-```
-
----
+<p align="center">
+  <img src="assets/banner.svg" alt="Discord Stock Research Bot banner" width="100%"/>
+</p>
 
 <p align="center">
-  <img src="assets/architecture.svg" alt="Architecture: Discord DM to allowlist to agent to tools to research reply" width="920"/>
+  <strong>Natural language stock research on Discord.</strong><br/>
+  You talk. The agent runs tools. A research brief lands in the DM.<br/>
+  <em>Not a slash-command toy. Not a price ticker. Not live brokerage glue.</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/SamsonCyber/discord-stock-research-bot/actions/workflows/ci.yml"><img src="https://github.com/SamsonCyber/discord-stock-research-bot/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&amp;logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/license-MIT-emerald" alt="MIT"/>
+  <img src="https://img.shields.io/badge/UX-natural%20language%20DMs-5865F2?logo=discord&amp;logoColor=white" alt="Discord DMs"/>
+  <img src="https://img.shields.io/badge/offline%20demo-no%20API%20keys-22d3ee" alt="Offline demo"/>
+</p>
+
+<p align="center">
+  <a href="#try-it-in-10-seconds"><strong>Try offline</strong></a> ·
+  <a href="assets/interactive-demo.html"><strong>Interactive demo</strong></a> ·
+  <a href="#discord-setup">Discord setup</a> ·
+  <a href="docs/PRODUCTION_TOOLS.md">Production tool catalog</a>
 </p>
 
 ---
 
-## Why this exists
+## The product in one glance
 
-Most Discord "stock bots" are slash menus and price tickers. This one is different:
+<p align="center">
+  <img src="assets/hero-discord.svg" alt="Discord DM mock: user says research AAPL, bot returns structured research brief" width="920"/>
+</p>
 
-| Most bots | This bot |
+That mock is **not marketing fiction**. The reply body is generated from the same offline engine as:
+
+```bash
+python -m discord_stock_research_bot.demo research AAPL
+```
+
+| You say | What happens |
 |---|---|
-| `/price AAPL` | `what do you think about AAPL?` |
-| Fixed command surface | Intent → tool registry |
-| Guild channel noise | **DM-only** research path |
-| Open to everyone | **Fail-closed allowlist** |
+| `research AAPL` | Thesis · bias · conviction bar · sparkline · catalysts · risks · invalidation |
+| `levels on NVDA` | Support / resistance ladder around a shared ref price |
+| `risk for TSLA` | ATR%, beta, demo stop, risk/share, 1R target |
+| `help` | Tool catalog |
 
-Same product shape as a serious research agent: **you talk, tools run, research comes back.**  
-This public package ships a deterministic offline engine so anyone can clone, run, and learn the architecture without keys.
+**DM-only. Fail-closed allowlist. No guild spam.**
 
 ---
 
-## Try it offline (primary demo path)
+## Try it in 10 seconds
+
+No Discord token. No market API keys. No account.
 
 ```bash
 git clone https://github.com/SamsonCyber/discord-stock-research-bot.git
@@ -50,68 +60,75 @@ python -m venv .venv
 # POSIX:   source .venv/bin/activate
 python -m pip install -e ".[dev]"
 python -m pytest -q
-
 python -m discord_stock_research_bot.demo research AAPL
+```
+
+Also:
+
+```bash
 python -m discord_stock_research_bot.demo levels on NVDA
 python -m discord_stock_research_bot.demo "risk for TSLA"
 python -m discord_stock_research_bot.demo help
 ```
 
+### Click-through demo (no install)
+
+Open the in-repo UI (self-contained HTML, engine payloads baked in):
+
+**[assets/interactive-demo.html](assets/interactive-demo.html)**
+
+Pick AAPL / NVDA / TSLA / MSFT / AMD and flip research · levels · risk. Same deterministic engine as the CLI.
+
 ---
 
-## Real sample reply
+## Live sample (checked in)
 
-Exact output from `python -m discord_stock_research_bot.demo research AAPL`  
-(checked in under [`docs/samples/aapl-research.txt`](docs/samples/aapl-research.txt); deterministic per ticker):
+Exact `run_turn("research AAPL")` output — also at [`docs/samples/aapl-research.txt`](docs/samples/aapl-research.txt):
 
 ```text
-**AAPL** research brief (`offline-demo`)
-Sector: Energy · Bias: **bullish** · Conviction: 4/5
-Ref price: `$319.46` (-1.75%) · Vol vs avg: `1.79x`
+**AAPL** · Apple
+`offline-demo` · Technology
+🟡 **NEUTRAL** · conviction `███░░` 3/5
+**$200.99** (-1.75%) · vol `1.79x` avg
+tape `▇█▇▇▆▆▅▄▄▃▃▁▂▃▃▄`
 
 **Thesis**
-AAPL shows constructive relative strength in this demo model. Watch for continuation if price holds above near support and volume stays elevated.
+Apple (AAPL) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.
 
 **Catalysts**
-  • Product or segment growth narrative improving
-  • Multiple expansion if guidance holds
-  • Technical reclaim of recent range high
+  • Range break with expanding volume
+  • Catalyst calendar (earnings / product / event)
+  • Technology leadership change that pulls the name
 
 **Risks**
-  • Earnings or guidance miss
-  • Sector rotation away from growth
-  • Break of structure under nearest support
+  • Whipsaw inside the range
+  • Low-liquidity fake break
+  • Macro headline risk that rewrites the tape
 
-**Invalidation:** Daily close below $300.29 (demo level)
+**Invalidation:** Two closes outside $194.96-$207.02 (demo band)
 
 _Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
 
 _tools used: research_
 ```
 
-Same shape lands in a Discord DM when the bot is running.
+Regenerate showcase assets after engine changes:
+
+```bash
+python scripts/build_showcase.py
+```
 
 ---
 
-## How a turn works
+## Architecture
+
+<p align="center">
+  <img src="assets/architecture.svg" alt="Flow: DM to allowlist to agent to tools to research reply" width="900"/>
+</p>
 
 ```text
-  "research AAPL"  or  "levels on TSLA"  or  "risk for MSFT"
-              │
-              ▼
-     ┌─────────────────┐
-     │  allowlist gate │  fail-closed; guild chat ignored
-     └────────┬────────┘
-              ▼
-     ┌─────────────────┐
-     │  research agent │  classify intent · extract tickers
-     └────────┬────────┘
-              ▼
-     ┌──────────────────────────────────┐
-     │  tools: research · levels · risk │
-     └────────┬─────────────────────────┘
-              ▼
-     structured brief + "tools used" footer
+  natural language  →  allowlist gate  →  intent classify  →  tools  →  research reply
+       DM only           fail-closed         research|levels|risk         + tools footer
 ```
 
 | Module | Role |
@@ -121,104 +138,92 @@ Same shape lands in a Discord DM when the bot is running.
 | [`tools.py`](src/discord_stock_research_bot/tools.py) | Tool registry |
 | [`research.py`](src/discord_stock_research_bot/research.py) | Offline deterministic engine |
 | [`auth.py`](src/discord_stock_research_bot/auth.py) | Fail-closed allowlist |
-| [`demo.py`](src/discord_stock_research_bot/demo.py) | Offline NL CLI |
+| [`demo.py`](src/discord_stock_research_bot/demo.py) | Offline CLI |
 
 ---
 
 ## Tools in this package
 
-| Tool | What you get |
+| Tool | Card you get |
 |---|---|
-| `research` | Bias, conviction, thesis, catalysts, risks, invalidation |
-| `levels` | Support / resistance map + pivot |
-| `risk` | ATR%, beta, demo stop distance, risk per share |
-| `list_tools` | Catalog (also used by `help`) |
+| `research` | Company · sector · bias · conviction bar · price · sparkline · thesis · catalysts · risks · invalidation |
+| `levels` | Shared ref price · pivot · ASCII support/resistance ladder |
+| `risk` | ATR heat · beta · demo stop · risk/share · 1R target |
+| `list_tools` | Catalog (`help`) |
 
-Every response is labeled **`offline-demo`**: deterministic per ticker, not live market data.
+Every card is tagged **`offline-demo`**: deterministic per ticker, not live market data.
 
-### Production-scale surface (private deploy)
+Famous symbols (AAPL, NVDA, TSLA, …) resolve to real sectors and company names so demos look intentional. Prices stay synthetic.
 
-A full private research agent can grow to **~72 tools** (charts, fundamentals, SEC/EDGAR, thesis memory, macro packs, and more) while keeping the same NL Discord UX.
+### Private production surface
 
-That catalog is **not** live in this clone. See the honest inventory:
+A private deploy can keep this UX and grow into a large research tool graph (charts, fundamentals, SEC/EDGAR, thesis memory, macro packs, …).
 
-**[docs/PRODUCTION_TOOLS.md](docs/PRODUCTION_TOOLS.md)**
+That inventory is **documented, not shipped live here**:
+
+**[docs/PRODUCTION_TOOLS.md](docs/PRODUCTION_TOOLS.md)** (~72 tools, owner view)
 
 ---
 
-## Discord (when you want DMs)
+## Discord setup
 
-1. Create a bot in the [Discord Developer Portal](https://discord.com/developers/applications).
-2. Enable **Message Content Intent**.
-3. Allowlist your Discord user ID.
-4. Start the bot and **open a DM** (guild messages are ignored on purpose).
+1. [Discord Developer Portal](https://discord.com/developers/applications) → bot  
+2. Enable **Message Content Intent**  
+3. Allowlist your Discord user ID  
+4. DM the bot (guild messages ignored on purpose)
 
 ```bash
 cp .env.example .env
-# set STOCK_RESEARCH_DISCORD_TOKEN and STOCK_RESEARCH_ALLOWED_USER_IDS
+# STOCK_RESEARCH_DISCORD_TOKEN=...
+# STOCK_RESEARCH_ALLOWED_USER_IDS=your_id
 python -m discord_stock_research_bot.bot
 ```
 
 | Variable | Required | Purpose |
 |---|---|---|
 | `STOCK_RESEARCH_DISCORD_TOKEN` | yes | Bot token |
-| `STOCK_RESEARCH_ALLOWED_USER_IDS` | yes | Comma-separated Discord user IDs |
-| `STOCK_RESEARCH_ALLOWED_USER_IDS_FILE` | no | File of IDs (one per line) |
+| `STOCK_RESEARCH_ALLOWED_USER_IDS` | yes | Comma-separated user IDs |
+| `STOCK_RESEARCH_ALLOWED_USER_IDS_FILE` | no | File of IDs |
 
 Empty allowlist → **process refuses to start**.
 
-Optional connect check (never prints the token):
-
 ```bash
-python scripts/live_smoke.py
+python scripts/live_smoke.py   # connect check; never prints the token
 ```
 
-### What you can say
+---
 
-| You say | Tools run |
+## Why it is not another stock bot
+
+| Typical Discord bot | This |
 |---|---|
-| `research AAPL` | `research` |
-| `what's the outlook on NVDA?` | `research` |
-| `levels on TSLA` | `levels` |
-| `risk for AMD` | `risk` |
-| `help` | `list_tools` |
+| `/price AAPL` | `what do you think about AAPL?` |
+| Fixed command surface | Intent → tool registry |
+| Guild channel noise | **DM-only** research path |
+| Open to everyone | **Fail-closed allowlist** |
+| Live quote cosplay without auth | Honest **offline-demo** labels |
+
+Same product shape as a serious research agent: **you talk, tools run, research comes back.**
 
 ---
 
-## Security posture
+## Security
 
-- **DM-only** research path
-- **Fail-closed allowlist** on every turn
-- No brokerage, order router, or wallet code
-- No secrets in git
-- Public package stays offline-first for research data
+- DM-only research path  
+- Fail-closed allowlist on every turn  
+- No brokerage / order router / wallet code  
+- No secrets in git  
 
-Details: [SECURITY.md](SECURITY.md) · [docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md)
-
----
-
-## Public package vs private production agent
-
-| | This repo (public) | Private production agent |
-|---|---|---|
-| UX | Natural language DMs | Natural language DMs |
-| Agent | Lightweight intent → tools | LLM tool loop over large graph |
-| Data | Offline deterministic demo | Live market data + models |
-| Auth | Allowlist | Allowlist + stronger gateway |
-| Tools | 4 offline tools | ~72 research tools (see [catalog](docs/PRODUCTION_TOOLS.md)) |
-
-Same idea either way: **you talk, tools run, research comes back.**
+[SECURITY.md](SECURITY.md) · [docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md)
 
 ---
 
-## Project status
+## Status
 
-See [STATUS.md](STATUS.md) and [CHANGELOG.md](CHANGELOG.md).
-
----
+Package **0.4.0** · [STATUS.md](STATUS.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT · [LICENSE](LICENSE)
 
 **Not financial advice.** Demo data is not live market data. You own your risk.
