@@ -90,7 +90,7 @@ def main() -> None:
         raise SystemExit(
             "STOCK_RESEARCH_ALLOWED_USER_IDS is empty; refusing to start (fail-closed)"
         )
-    print("Discord Stock Research Bot")
+    print("Equity Research Agent")
     print("  UX: natural language DMs → agent → research tools")
     print("  Enable Message Content Intent in the Discord developer portal.")
     bot.run(token)

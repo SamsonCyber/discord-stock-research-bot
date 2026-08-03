@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from discord_stock_research_bot.agent import classify_intent, extract_tickers, run_turn
-from discord_stock_research_bot.auth import is_allowed
-from discord_stock_research_bot.research import research_brief
+from equity_research_agent.agent import classify_intent, extract_tickers, run_turn
+from equity_research_agent.auth import is_allowed
+from equity_research_agent.research import research_brief
 
-PKG = Path(__file__).resolve().parents[1] / "src" / "discord_stock_research_bot"
+PKG = Path(__file__).resolve().parents[1] / "src" / "equity_research_agent"
 
 FORBIDDEN_IMPORT_ROOTS = frozenset(
     {
@@ -197,7 +197,7 @@ def test_readme_points_at_showcase_assets() -> None:
     assert "assets/architecture.svg" in readme
     assert "docs/samples/aapl-research.txt" in readme
     assert "docs/PRODUCTION_TOOLS.md" in readme
-    assert "python -m discord_stock_research_bot.demo" in readme
+    assert "python -m equity_research_agent.demo" in readme
     assert "scripts/build_showcase.py" in readme
 
 

@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "discord-stock-research-bot"
+name = "equity-research-agent"
 version = "0.4.2"
-description = "Natural-language Discord stock research bot: DM it in English, agent runs tools, research lands"
+description = "Natural-language equity research agent: chat in English, agent runs tools, structured research lands (Discord DM adapter included)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -15,11 +15,11 @@ dependencies = ["numpy>=1.24", "discord.py>=2.3"]
 dev = ["pytest>=8.0", "ruff>=0.9"]
 
 [project.scripts]
-discord-stock-research-bot = "discord_stock_research_bot.bot:main"
+equity-research-agent = "equity_research_agent.bot:main"
 
 [project.urls]
-Homepage = "https://github.com/SamsonCyber/discord-stock-research-bot"
-Issues = "https://github.com/SamsonCyber/discord-stock-research-bot/issues"
+Homepage = "https://github.com/SamsonCyber/equity-research-agent"
+Issues = "https://github.com/SamsonCyber/equity-research-agent/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

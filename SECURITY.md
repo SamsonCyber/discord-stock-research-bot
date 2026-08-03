@@ -1,6 +1,6 @@
 # Security model
 
-Discord Stock Research Bot is an **allowlisted natural-language research agent** on Discord DMs.
+Equity Research Agent is an **allowlisted natural-language research agent** on Discord DMs.
 
 ## Guarantees
 

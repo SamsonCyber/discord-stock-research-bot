@@ -6,8 +6,8 @@ import html
 import json
 from pathlib import Path
 
-from discord_stock_research_bot.agent import run_turn
-from discord_stock_research_bot.research import research_brief
+from equity_research_agent.agent import run_turn
+from equity_research_agent.research import research_brief
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "assets"
@@ -108,7 +108,7 @@ def main() -> None:
   <rect width="1280" height="640" fill="url(#g)"/>
   <circle cx="200" cy="120" r="220" fill="#5865F2" opacity="0.15"/>
   <circle cx="1100" cy="520" r="260" fill="#22d3ee" opacity="0.10"/>
-  <text x="80" y="200" fill="#e2e8f0" font-family="Segoe UI, system-ui, sans-serif" font-size="54" font-weight="800">Discord Stock Research Bot</text>
+  <text x="80" y="200" fill="#e2e8f0" font-family="Segoe UI, system-ui, sans-serif" font-size="54" font-weight="800">Equity Research Agent</text>
   <text x="80" y="270" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="28">Talk like a desk. Tools run. Research lands.</text>
   <rect x="80" y="320" width="420" height="56" rx="14" fill="url(#a)"/>
   <text x="290" y="356" text-anchor="middle" fill="#0b1020" font-family="Consolas, monospace" font-size="20" font-weight="700">research AAPL</text>
@@ -134,7 +134,7 @@ def main() -> None:
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Discord Stock Research Bot — Interactive Demo</title>
+<title>Equity Research Agent — Interactive Demo</title>
 <style>
   :root {{
     --bg: #0b1020;
@@ -207,7 +207,7 @@ def main() -> None:
 <body>
   <div class="wrap">
     <h1>Interactive offline demo</h1>
-    <p class="sub">Same engine as <code>python -m discord_stock_research_bot.demo</code>. No network. No token. Pick a ticker and tool.</p>
+    <p class="sub">Same engine as <code>python -m equity_research_agent.demo</code>. No network. No token. Pick a ticker and tool.</p>
     <div class="bar" id="tickers"></div>
     <div class="bar modes" id="modes"></div>
     <div class="window">
@@ -235,7 +235,7 @@ def main() -> None:
     </div>
     <p class="foot">
       Demo data is deterministic per ticker — not live markets.
-      Source: <a href="https://github.com/SamsonCyber/discord-stock-research-bot">SamsonCyber/discord-stock-research-bot</a>
+      Source: <a href="https://github.com/SamsonCyber/equity-research-agent">SamsonCyber/equity-research-agent</a>
     </p>
   </div>
   <script>
