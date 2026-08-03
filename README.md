@@ -39,7 +39,7 @@ python -m discord_stock_research_bot.demo research AAPL
 
 | You say | What happens |
 |---|---|
-| `research AAPL` | Thesis · bias · conviction bar · sparkline · catalysts · risks · invalidation |
+| `research AAPL` | Thesis · bias · conviction · catalysts · risks · invalidation |
 | `levels on NVDA` | Support / resistance ladder around a shared ref price |
 | `risk for TSLA` | ATR%, beta, demo stop, risk/share, 1R target |
 | `help` | Tool catalog |
@@ -86,43 +86,32 @@ Pick AAPL / NVDA / TSLA / MSFT / AMD and flip research · levels · risk. Same d
 Exact `run_turn("research AAPL")` output. Full file: [`docs/samples/aapl-research.txt`](docs/samples/aapl-research.txt).
 
 ~~~~text
-┌────────────────────────────────────────────┐
-│ AAPL  ·  Apple                             │
-│ Technology  ·  offline-demo                │
-├────────────────────────────────────────────┤
-│  BIAS        NEUTRAL  ◆                    │
-│  CONVICTION  ███░░  3/5                    │
-│  PRICE       $200.99  -1.75%  (down)       │
-│  VOLUME      █████░░░  1.79x avg           │
-│  TAPE        ▇█▇▇▆▆▅▄▄▃▃▁▂▃▃▄▃▄▃▂          │
-├────────────────────────────────────────────┤
-│ THESIS:                                    │
-│   Apple (AAPL) is range-bound in this      │
-│   offline model. No edge until a clean     │
-│   break with volume. Size small or wait;   │
-│   fake breaks are the default.             │
-│                                            │
-│ CATALYSTS:                                 │
-│  1. Range break with expanding volume      │
-│   2. Catalyst calendar (earnings / product │
-│   / event)                                 │
-│   3. Technology leadership change that     │
-│   pulls the name                           │
-│                                            │
-│ RISKS:                                     │
-│  1. Whipsaw inside the range               │
-│  2. Low-liquidity fake break               │
-│   3. Macro headline risk that rewrites the │
-│   tape                                     │
-│                                            │
-│ INVALIDATION:                              │
-│   Two closes outside $194.96-$207.02 (demo │
-│   band)                                    │
-├────────────────────────────────────────────┤
-│   Demo research data only. Offline /       │
-│   deterministic. Not live market data. Not │
-│   financial advice.                        │
-└────────────────────────────────────────────┘
+**AAPL · research**
+`as_of offline-demo` · Apple · Technology · paper research only
+
+**Read** · INFERRED
+Apple (AAPL) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.
+
+**1 · Tape** · VERIFIED (demo OHLCV)
+Last **$200.99** (-1.75%) · heavy volume (~1.8x avg)
+
+**2 · Lean** · INFERRED
+**neutral / range (INFERRED)** · conviction **med**
+
+**3 · Catalysts** · PROBABLE
+• Range break with expanding volume
+• Catalyst calendar (earnings / product / event)
+• Technology leadership change that pulls the name
+
+**4 · Risks** · PROBABLE
+• Whipsaw inside the range
+• Low-liquidity fake break
+• Macro headline risk that rewrites the tape
+
+**Invalidation**
+Two closes outside $194.96-$207.02 (demo band)
+
+_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
 
 _tools used: research_
 ~~~~
@@ -161,7 +150,7 @@ python scripts/build_showcase.py
 
 | Tool | Card you get |
 |---|---|
-| `research` | Company · sector · bias · conviction bar · price · sparkline · thesis · catalysts · risks · invalidation |
+| `research` | Company · sector · bias · conviction · price · thesis · catalysts · risks · invalidation |
 | `levels` | Shared ref price · pivot · ASCII support/resistance ladder |
 | `risk` | ATR heat · beta · demo stop · risk/share · 1R target |
 | `list_tools` | Catalog (`help`) |

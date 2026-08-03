@@ -43,8 +43,6 @@ _DISCLAIMER = (
     "Not live market data. Not financial advice."
 )
 
-_SPARK = "▁▂▃▄▅▆▇█"
-
 
 def normalize_ticker(raw: str) -> str:
     ticker = (raw or "").strip().upper()
@@ -81,37 +79,18 @@ def _company_meta(ticker: str) -> tuple[str, str]:
     return ticker, sector
 
 
-def _conviction_bar(n: int, width: int = 5) -> str:
-    n = max(0, min(int(n), width))
-    return "█" * n + "░" * (width - n)
+def _conviction_word(n: int) -> str:
+    """Map 1-5 demo score to production low/med/high words (no bar graphs)."""
+    n = max(1, min(int(n), 5))
+    if n <= 2:
+        return "low"
+    if n <= 3:
+        return "med"
+    return "high"
 
 
-def _sparkline(ticker: str, last: float, n: int = 20) -> str:
-    rng = _rng_for(ticker, 11)
-    rets = rng.normal(0.001, 0.012, size=n)
-    path = last * np.exp(np.cumsum(rets[::-1]))[::-1]
-    path = path * (last / path[-1])
-    lo, hi = float(path.min()), float(path.max())
-    span = max(hi - lo, 1e-9)
-    chars: list[str] = []
-    for p in path:
-        idx = int((float(p) - lo) / span * (len(_SPARK) - 1))
-        chars.append(_SPARK[max(0, min(idx, len(_SPARK) - 1))])
-    return "".join(chars)
-
-
-def _pct_bar(value: float, lo: float, hi: float, width: int = 10) -> str:
-    """Map value into a fixed-width bar between lo and hi."""
-    if hi <= lo:
-        return "░" * width
-    t = (float(value) - lo) / (hi - lo)
-    t = max(0.0, min(1.0, t))
-    filled = int(round(t * width))
-    return "█" * filled + "░" * (width - filled)
-
-
-# Terminal cards: no markdown. Discord uses Embeds (see as_embed_dict).
-_CARD_W = 46
+# Discord-native markdown (matches production agent shape: section headers
+# + epistemic tags). No ASCII bars, sparklines, or box cards.
 
 _BIAS_COLOR = {
     "bullish": 0x57F287,  # Discord green
@@ -122,103 +101,25 @@ _LEVEL_COLOR = 0x5865F2
 _RISK_COLOR = 0xEB459E
 
 
-def _wrap(text: str, width: int) -> list[str]:
-    words = (text or "").split()
-    if not words:
-        return [""]
-    lines: list[str] = []
-    cur = words[0]
-    for w in words[1:]:
-        if len(cur) + 1 + len(w) <= width:
-            cur = f"{cur} {w}"
-        else:
-            lines.append(cur)
-            cur = w
-    lines.append(cur)
-    return lines
-
-
-def _box(title: str, body_lines: list[str], *, width: int = _CARD_W) -> str:
-    """Monospace card that looks right in a terminal (no Discord markdown)."""
-    inner = width - 2
-    top = "┌" + "─" * inner + "┐"
-    mid = "├" + "─" * inner + "┤"
-    bot = "└" + "─" * inner + "┘"
-
-    def row(text: str = "") -> str:
-        t = text[:inner]
-        return "│" + t.ljust(inner) + "│"
-
-    out = [top]
-    # Title can be two lines
-    for part in title.split("\n"):
-        out.append(row(f" {part}"))
-    out.append(mid)
-    for line in body_lines:
-        if line == "---":
-            out.append(mid)
-            continue
-        if not line:
-            out.append(row(""))
-            continue
-        # Section headers flush left
-        if line.endswith(":") and line.upper() == line:
-            out.append(row(f" {line}"))
-            continue
-        # Pre-aligned rows (kv / ladder): keep spacing, do not strip
-        if line.startswith("  "):
-            if len(line) <= inner:
-                out.append(row(line))
-            else:
-                # Long catalyst/risk lines: hang under the number
-                prefix = "   "
-                chunks = _wrap(line.strip(), inner - len(prefix))
-                for chunk in chunks:
-                    out.append(row(f"{prefix}{chunk}"))
-            continue
-        for chunk in _wrap(line, inner - 1):
-            out.append(row(f" {chunk}"))
-    out.append(bot)
-    return "\n".join(out)
-
-
-def _level_ladder_lines(last: float, supports: list[float], resistances: list[float]) -> list[str]:
-    rows: list[tuple[float, str, str]] = []
-    for i, r in enumerate(sorted(resistances, reverse=True), start=1):
-        dist = (r - last) / last * 100.0
-        rows.append((r, "R", f"R{i} +{dist:.1f}%"))
-    rows.append((last, "P", "LAST"))
-    for i, s in enumerate(sorted(supports, reverse=True), start=1):
-        dist = (s - last) / last * 100.0
-        rows.append((s, "S", f"S{i} {dist:.1f}%"))
-
-    prices = [p for p, _, _ in rows]
-    lo, hi = min(prices), max(prices)
-    span = max(hi - lo, 1e-9)
-    lines: list[str] = []
-    for price, kind, label in rows:
-        pos = int(round((price - lo) / span * 10))
-        track = list("·" * 11)
-        track[pos] = "●" if kind == "P" else ("▲" if kind == "R" else "▼")
-        rail = "".join(track)
-        if kind == "P":
-            lines.append(f"  {rail} ${price:>8.2f}  << LAST")
-        else:
-            lines.append(f"  {rail} ${price:>8.2f}  {label}")
-    return lines
-
-
-def _kv_lines(rows: list[tuple[str, str]]) -> list[str]:
-    key_w = max(len(k) for k, _ in rows)
-    return [f"  {k:<{key_w}}  {v}" for k, v in rows]
-
-
 def _bias_label(bias: str) -> str:
     return {
-        "bullish": "BULL  ▲",
-        "bearish": "BEAR  ▼",
-        "neutral": "NEUTRAL  ◆",
-    }.get(bias, bias.upper())
+        "bullish": "bullish",
+        "bearish": "bearish",
+        "neutral": "neutral / range",
+    }.get(bias, bias)
+
+
+def _lean_tag(bias: str) -> str:
+    return f"{_bias_label(bias)} (INFERRED)"
+
+
+def _vol_note(volume_vs_avg: float) -> str:
+    vr = float(volume_vs_avg)
+    if vr >= 1.5:
+        return f" · heavy volume (~{vr:.1f}x avg)"
+    if vr <= 0.7:
+        return f" · light volume (~{vr:.1f}x avg)"
+    return f" · volume ~{vr:.1f}x avg"
 
 
 @dataclass(frozen=True)
@@ -232,7 +133,6 @@ class ResearchBrief:
     last_price: float
     change_pct: float
     volume_vs_avg: float
-    sparkline: str
     thesis: str
     catalysts: list[str]
     risks: list[str]
@@ -243,74 +143,49 @@ class ResearchBrief:
         return asdict(self)
 
     def format_message(self) -> str:
-        """Terminal / plain-text card. No markdown (looks correct in CLI)."""
+        """Discord markdown research reply (production agent shape).
+
+        Summary-first sections + epistemic tags. Plain words only — no bars
+        or sparkline cosplay.
+        """
         chg_s = f"{self.change_pct:+.2f}%"
-        direction = "up" if self.change_pct >= 0 else "down"
-        bar = _conviction_bar(self.conviction)
-        vol_bar = _pct_bar(self.volume_vs_avg, 0.5, 2.5, width=8)
-        body: list[str] = []
-        body.extend(
-            _kv_lines(
-                [
-                    ("BIAS", _bias_label(self.bias)),
-                    ("CONVICTION", f"{bar}  {self.conviction}/5"),
-                    ("PRICE", f"${self.last_price:.2f}  {chg_s}  ({direction})"),
-                    ("VOLUME", f"{vol_bar}  {self.volume_vs_avg:.2f}x avg"),
-                    ("TAPE", self.sparkline),
-                ]
-            )
-        )
-        body.append("---")
-        body.append("THESIS:")
-        body.append(f"  {self.thesis}")
-        body.append("")
-        body.append("CATALYSTS:")
-        for i, c in enumerate(self.catalysts, 1):
-            body.append(f"  {i}. {c}")
-        body.append("")
-        body.append("RISKS:")
-        for i, r in enumerate(self.risks, 1):
-            body.append(f"  {i}. {r}")
-        body.append("")
-        body.append("INVALIDATION:")
-        body.append(f"  {self.invalidation}")
-        body.append("---")
-        body.append(f"  {self.disclaimer}")
-        title = f"{self.ticker}  ·  {self.company}\n{self.sector}  ·  {self.mode}"
-        return _box(title, body)
+        conv = _conviction_word(self.conviction)
+        lines: list[str] = [
+            f"**{self.ticker} · research**",
+            f"`as_of {self.mode}` · {self.company} · {self.sector} · paper research only",
+            "",
+            "**Read** · INFERRED",
+            self.thesis,
+            "",
+            "**1 · Tape** · VERIFIED (demo OHLCV)",
+            f"Last **${self.last_price:.2f}** ({chg_s}){_vol_note(self.volume_vs_avg)}",
+            "",
+            "**2 · Lean** · INFERRED",
+            f"**{_lean_tag(self.bias)}** · conviction **{conv}**",
+            "",
+            "**3 · Catalysts** · PROBABLE",
+        ]
+        for c in self.catalysts:
+            lines.append(f"• {c}")
+        lines.append("")
+        lines.append("**4 · Risks** · PROBABLE")
+        for r in self.risks:
+            lines.append(f"• {r}")
+        lines.append("")
+        lines.append("**Invalidation**")
+        lines.append(self.invalidation)
+        lines.append("")
+        lines.append(f"_{self.disclaimer}_")
+        return "\n".join(lines)
 
     def as_embed_dict(self) -> dict:
-        """Discord Embed payload (render as a real embed, not raw markdown)."""
-        bar = _conviction_bar(self.conviction)
-        chg_s = f"{self.change_pct:+.2f}%"
-        cats = "\n".join(f"**{i}.** {c}" for i, c in enumerate(self.catalysts, 1))
-        risks = "\n".join(f"**{i}.** {r}" for i, r in enumerate(self.risks, 1))
+        """Optional Embed wrapper; production path prefers plain markdown."""
+        body = self.format_message()
+        # Discord embed description hard limit ~4096
         return {
             "title": f"{self.ticker}  ·  {self.company}",
-            "description": f"**{self.sector}** · `{self.mode}`\n`{self.sparkline}`",
+            "description": body[:4000],
             "color": _BIAS_COLOR.get(self.bias, 0x99AAB5),
-            "fields": [
-                {"name": "Bias", "value": _bias_label(self.bias), "inline": True},
-                {
-                    "name": "Conviction",
-                    "value": f"{bar}  **{self.conviction}/5**",
-                    "inline": True,
-                },
-                {
-                    "name": "Price",
-                    "value": f"**${self.last_price:.2f}**  ({chg_s})",
-                    "inline": True,
-                },
-                {
-                    "name": "Volume",
-                    "value": f"**{self.volume_vs_avg:.2f}x** avg",
-                    "inline": True,
-                },
-                {"name": "Thesis", "value": self.thesis[:1024], "inline": False},
-                {"name": "Catalysts", "value": cats[:1024], "inline": False},
-                {"name": "Risks", "value": risks[:1024], "inline": False},
-                {"name": "Invalidation", "value": self.invalidation[:1024], "inline": False},
-            ],
             "footer": {"text": self.disclaimer[:2048]},
         }
 
@@ -330,62 +205,43 @@ class LevelMap:
         return asdict(self)
 
     def format_message(self) -> str:
+        """Discord markdown levels reply (chart-read style)."""
         nearest_s = min(self.supports, key=lambda x: abs(x - self.last_price))
         nearest_r = min(self.resistances, key=lambda x: abs(x - self.last_price))
         room_up = (nearest_r - self.last_price) / self.last_price * 100.0
         room_dn = (self.last_price - nearest_s) / self.last_price * 100.0
-        body: list[str] = []
-        body.extend(
-            _kv_lines(
-                [
-                    ("LAST", f"${self.last_price:.2f}"),
-                    ("PIVOT", f"${self.pivot:.2f}"),
-                    ("NEAREST R", f"${nearest_r:.2f}  (+{room_up:.1f}%)"),
-                    ("NEAREST S", f"${nearest_s:.2f}  (-{room_dn:.1f}%)"),
-                ]
-            )
-        )
-        body.append("---")
-        body.append("LADDER:")
-        body.extend(_level_ladder_lines(self.last_price, self.supports, self.resistances))
-        body.append("---")
-        body.append(f"  {self.disclaimer}")
-        title = f"{self.ticker}  ·  LEVELS\n{self.company}  ·  {self.mode}"
-        return _box(title, body)
+        s_str = ", ".join(f"${s:.2f}" for s in sorted(self.supports, reverse=True))
+        r_str = ", ".join(f"${r:.2f}" for r in sorted(self.resistances))
+        lines = [
+            f"**{self.ticker} · levels**",
+            f"`as_of {self.mode}` · {self.company} · paper research only",
+            "",
+            "**Take** · INFERRED",
+            (
+                f"Price sits near **${self.last_price:.2f}** with pivot **${self.pivot:.2f}**. "
+                f"Nearest resistance **${nearest_r:.2f}** (+{room_up:.1f}%); "
+                f"nearest support **${nearest_s:.2f}** (-{room_dn:.1f}%)."
+            ),
+            "",
+            "**Levels that matter** · VERIFIED (demo)",
+            f"Support: {s_str}",
+            f"Resistance: {r_str}",
+            f"Pivot: **${self.pivot:.2f}**",
+            "",
+            "**What I'm watching**",
+            f"• Clean hold above **${nearest_s:.2f}** with volume",
+            f"• Break / reclaim of **${nearest_r:.2f}**",
+            "",
+            f"_{self.disclaimer}_",
+        ]
+        return "\n".join(lines)
 
     def as_embed_dict(self) -> dict:
-        nearest_s = min(self.supports, key=lambda x: abs(x - self.last_price))
-        nearest_r = min(self.resistances, key=lambda x: abs(x - self.last_price))
-        room_up = (nearest_r - self.last_price) / self.last_price * 100.0
-        room_dn = (self.last_price - nearest_s) / self.last_price * 100.0
-        ladder = "\n".join(
-            _level_ladder_lines(self.last_price, self.supports, self.resistances)
-        )
+        body = self.format_message()
         return {
             "title": f"{self.ticker}  ·  Levels",
-            "description": f"**{self.company}** · `{self.mode}`",
+            "description": body[:4000],
             "color": _LEVEL_COLOR,
-            "fields": [
-                {
-                    "name": "Last",
-                    "value": f"**${self.last_price:.2f}**",
-                    "inline": True,
-                },
-                {"name": "Pivot", "value": f"**${self.pivot:.2f}**", "inline": True},
-                {
-                    "name": "Nearest R / S",
-                    "value": (
-                        f"R **${nearest_r:.2f}** (+{room_up:.1f}%)\n"
-                        f"S **${nearest_s:.2f}** (-{room_dn:.1f}%)"
-                    ),
-                    "inline": False,
-                },
-                {
-                    "name": "Ladder",
-                    "value": f"```\n{ladder}\n```"[:1024],
-                    "inline": False,
-                },
-            ],
             "footer": {"text": self.disclaimer[:2048]},
         }
 
@@ -408,83 +264,38 @@ class RiskSnapshot:
         return asdict(self)
 
     def format_message(self) -> str:
+        """Discord markdown risk reply (production agent shape)."""
         if self.atr_pct >= 3.5:
-            heat = "HOT"
+            heat = "hot"
         elif self.atr_pct <= 2.0:
-            heat = "CALM"
+            heat = "calm"
         else:
-            heat = "NORMAL"
-        atr_bar = _pct_bar(self.atr_pct, 1.0, 6.0, width=8)
-        beta_bar = _pct_bar(self.beta, 0.5, 2.0, width=8)
+            heat = "normal"
         risk_pct = self.risk_per_share / self.last_price * 100.0 if self.last_price else 0.0
-        body: list[str] = []
-        body.extend(
-            _kv_lines(
-                [
-                    ("LAST", f"${self.last_price:.2f}"),
-                    ("ATR%", f"{atr_bar}  {self.atr_pct:.2f}%  [{heat}]"),
-                    ("BETA", f"{beta_bar}  {self.beta:.2f}"),
-                    ("STOP", f"${self.suggested_stop:.2f}  (demo)"),
-                    ("RISK/SH", f"${self.risk_per_share:.2f}  ({risk_pct:.1f}% of last)"),
-                    ("1R TGT", f"${self.r_multiple_1r:.2f}  (demo)"),
-                ]
-            )
-        )
-        body.append("---")
-        body.append("NOTE:")
-        body.append(f"  {self.position_note}")
-        body.append("---")
-        body.append(f"  {self.disclaimer}")
-        title = f"{self.ticker}  ·  RISK\n{self.company}  ·  {self.mode}"
-        return _box(title, body)
+        lines = [
+            f"**{self.ticker} · risk**",
+            f"`as_of {self.mode}` · {self.company} · paper research only",
+            "",
+            "**Read** · INFERRED",
+            (
+                f"Last **${self.last_price:.2f}**. ATR **{self.atr_pct:.2f}%** ({heat}), "
+                f"beta **{self.beta:.2f}**. Demo stop **${self.suggested_stop:.2f}** "
+                f"(~{risk_pct:.1f}% risk/share); 1R target **${self.r_multiple_1r:.2f}**."
+            ),
+            "",
+            "**Sizing note** · PROBABLE",
+            self.position_note,
+            "",
+            f"_{self.disclaimer}_",
+        ]
+        return "\n".join(lines)
 
     def as_embed_dict(self) -> dict:
-        if self.atr_pct >= 3.5:
-            heat = "HOT"
-        elif self.atr_pct <= 2.0:
-            heat = "CALM"
-        else:
-            heat = "NORMAL"
-        atr_bar = _pct_bar(self.atr_pct, 1.0, 6.0, width=8)
-        beta_bar = _pct_bar(self.beta, 0.5, 2.0, width=8)
-        risk_pct = self.risk_per_share / self.last_price * 100.0 if self.last_price else 0.0
+        body = self.format_message()
         return {
             "title": f"{self.ticker}  ·  Risk",
-            "description": f"**{self.company}** · `{self.mode}`",
+            "description": body[:4000],
             "color": _RISK_COLOR,
-            "fields": [
-                {
-                    "name": "Last",
-                    "value": f"**${self.last_price:.2f}**",
-                    "inline": True,
-                },
-                {
-                    "name": "ATR%",
-                    "value": f"{atr_bar}\n**{self.atr_pct:.2f}%** [{heat}]",
-                    "inline": True,
-                },
-                {
-                    "name": "Beta",
-                    "value": f"{beta_bar}\n**{self.beta:.2f}**",
-                    "inline": True,
-                },
-                {
-                    "name": "Stop (demo)",
-                    "value": f"**${self.suggested_stop:.2f}**",
-                    "inline": True,
-                },
-                {
-                    "name": "Risk / share",
-                    "value": f"**${self.risk_per_share:.2f}** ({risk_pct:.1f}%)",
-                    "inline": True,
-                },
-                {
-                    "name": "1R target (demo)",
-                    "value": f"**${self.r_multiple_1r:.2f}**",
-                    "inline": True,
-                },
-                {"name": "Note", "value": self.position_note[:1024], "inline": False},
-            ],
             "footer": {"text": self.disclaimer[:2048]},
         }
 
@@ -503,7 +314,6 @@ def research_brief(ticker: str) -> ResearchBrief:
         bias = BIASES[int(rng.integers(0, len(BIASES)))]
     conviction = int(rng.integers(2, 6))
     vol = float(rng.uniform(0.6, 2.4))
-    spark = _sparkline(symbol, last)
 
     if bias == "bullish":
         thesis = (
@@ -567,7 +377,6 @@ def research_brief(ticker: str) -> ResearchBrief:
         last_price=round(last, 2),
         change_pct=round(change, 2),
         volume_vs_avg=round(vol, 2),
-        sparkline=spark,
         thesis=thesis,
         catalysts=catalysts,
         risks=risks,
