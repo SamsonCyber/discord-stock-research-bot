@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- Research card redesign: snapshot key/value board, blockquote thesis/invalidation, numbered catalysts/risks, visual level ladder with distance %, risk sizing card with heat bars.
+
 ## 0.4.0
 
 - Research engine upgrade: company names, real sectors for known tickers, conviction bars, sparklines, level ladders, richer risk cards.

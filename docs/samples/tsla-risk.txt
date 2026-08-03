@@ -1,10 +1,19 @@
-**TSLA** risk · Tesla
-`offline-demo` · last **$250.37**
-ATR% `3.63` (hot) · beta `1.34`
-Demo stop **$236.74** · risk/share **$13.62**
-1R target (demo) **$263.99**
-Demo sizing: risk a fixed fraction of capital against the stop distance. Do not size from conviction alone.
+# TSLA  ·  Risk
+**Tesla**  ·  `offline-demo`
 
+**Sizing card**
+```
+ LAST     $250.37
+ ATR%     ████░░░░  3.63%  [HOT]
+ BETA     ████░░░░  1.34
+ STOP     $236.74  (demo)
+ RISK/SH  $13.62  (5.4% of last)
+ 1R TGT   $263.99  (demo)
+```
+**Note**
+> Demo sizing: risk a fixed fraction of capital against the stop distance. Do not size from conviction alone.
+
+───
 _Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
 
 _tools used: risk_

@@ -83,34 +83,41 @@ Pick AAPL / NVDA / TSLA / MSFT / AMD and flip research · levels · risk. Same d
 
 ## Live sample (checked in)
 
-Exact `run_turn("research AAPL")` output — also at [`docs/samples/aapl-research.txt`](docs/samples/aapl-research.txt):
+Exact `run_turn("research AAPL")` output. Full file: [`docs/samples/aapl-research.txt`](docs/samples/aapl-research.txt).
 
-```text
-**AAPL** · Apple
-`offline-demo` · Technology
-🟡 **NEUTRAL** · conviction `███░░` 3/5
-**$200.99** (-1.75%) · vol `1.79x` avg
-tape `▇█▇▇▆▆▅▄▄▃▃▁▂▃▃▄`
+~~~~text
+# AAPL  ·  Apple
+`Technology`  ·  `offline-demo`
 
+**Snapshot**
+```
+ BIAS        NEUTRAL  ◆
+ CONVICTION  ███░░  3/5
+ PRICE       $200.99  -1.75%  (down)
+ VOLUME      █████░░░  1.79x avg
+ TAPE        ▇█▇▇▆▆▅▄▄▃▃▁▂▃▃▄▃▄▃▂
+```
 **Thesis**
-Apple (AAPL) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.
+> Apple (AAPL) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.
 
 **Catalysts**
-  • Range break with expanding volume
-  • Catalyst calendar (earnings / product / event)
-  • Technology leadership change that pulls the name
+`1`  Range break with expanding volume
+`2`  Catalyst calendar (earnings / product / event)
+`3`  Technology leadership change that pulls the name
 
 **Risks**
-  • Whipsaw inside the range
-  • Low-liquidity fake break
-  • Macro headline risk that rewrites the tape
+`1`  Whipsaw inside the range
+`2`  Low-liquidity fake break
+`3`  Macro headline risk that rewrites the tape
 
-**Invalidation:** Two closes outside $194.96-$207.02 (demo band)
+**Invalidation**
+> Two closes outside $194.96-$207.02 (demo band)
 
+───
 _Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
 
 _tools used: research_
-```
+~~~~
 
 Regenerate showcase assets after engine changes:
 

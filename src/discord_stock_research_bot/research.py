@@ -86,7 +86,7 @@ def _conviction_bar(n: int, width: int = 5) -> str:
     return "█" * n + "░" * (width - n)
 
 
-def _sparkline(ticker: str, last: float, n: int = 16) -> str:
+def _sparkline(ticker: str, last: float, n: int = 20) -> str:
     rng = _rng_for(ticker, 11)
     rets = rng.normal(0.001, 0.012, size=n)
     path = last * np.exp(np.cumsum(rets[::-1]))[::-1]
@@ -100,23 +100,56 @@ def _sparkline(ticker: str, last: float, n: int = 16) -> str:
     return "".join(chars)
 
 
+def _pct_bar(value: float, lo: float, hi: float, width: int = 10) -> str:
+    """Map value into a fixed-width bar between lo and hi."""
+    if hi <= lo:
+        return "░" * width
+    t = (float(value) - lo) / (hi - lo)
+    t = max(0.0, min(1.0, t))
+    filled = int(round(t * width))
+    return "█" * filled + "░" * (width - filled)
+
+
 def _level_ladder(last: float, supports: list[float], resistances: list[float]) -> str:
-    rows: list[tuple[float, str]] = []
-    for r in sorted(resistances, reverse=True):
-        rows.append((r, "R"))
-    rows.append((last, "▶"))
-    for s in sorted(supports, reverse=True):
-        rows.append((s, "S"))
+    rows: list[tuple[float, str, str]] = []
+    for i, r in enumerate(sorted(resistances, reverse=True), start=1):
+        dist = (r - last) / last * 100.0
+        rows.append((r, "R", f"R{i}  +{dist:.1f}%"))
+    rows.append((last, "P", "LAST"))
+    for i, s in enumerate(sorted(supports, reverse=True), start=1):
+        dist = (s - last) / last * 100.0
+        rows.append((s, "S", f"S{i}  {dist:.1f}%"))
+
+    # Visual width proportional to distance from mid of range
+    prices = [p for p, _, _ in rows]
+    lo, hi = min(prices), max(prices)
+    span = max(hi - lo, 1e-9)
     lines = ["```"]
-    for price, tag in rows:
-        if tag == "▶":
-            lines.append(f"  {tag} ${price:>8.2f}  ← last")
-        elif tag == "R":
-            lines.append(f"  ▲ ${price:>8.2f}  resistance")
+    for price, kind, label in rows:
+        pos = int(round((price - lo) / span * 12))
+        track = list("·" * 13)
+        track[pos] = "●" if kind == "P" else ("▲" if kind == "R" else "▼")
+        rail = "".join(track)
+        if kind == "P":
+            lines.append(f" {rail}  ${price:>8.2f}  ◀ LAST")
         else:
-            lines.append(f"  ▼ ${price:>8.2f}  support")
+            lines.append(f" {rail}  ${price:>8.2f}  {label}")
     lines.append("```")
     return "\n".join(lines)
+
+
+def _kv_block(rows: list[tuple[str, str]]) -> str:
+    """Aligned key/value block inside a Discord code fence."""
+    key_w = max(len(k) for k, _ in rows)
+    lines = ["```"]
+    for k, v in rows:
+        lines.append(f" {k:<{key_w}}  {v}")
+    lines.append("```")
+    return "\n".join(lines)
+
+
+def _numbered(items: list[str]) -> str:
+    return "\n".join(f"`{i}`  {item}" for i, item in enumerate(items, start=1))
 
 
 @dataclass(frozen=True)
@@ -141,21 +174,38 @@ class ResearchBrief:
         return asdict(self)
 
     def format_message(self) -> str:
-        cats = "\n".join(f"  • {c}" for c in self.catalysts)
-        risks = "\n".join(f"  • {r}" for r in self.risks)
-        bias_emoji = {"bullish": "🟢", "bearish": "🔴", "neutral": "🟡"}.get(self.bias, "⚪")
+        bias_tag = {
+            "bullish": "BULL  ▲",
+            "bearish": "BEAR  ▼",
+            "neutral": "NEUTRAL  ◆",
+        }.get(self.bias, self.bias.upper())
+        chg = self.change_pct
+        chg_s = f"{chg:+.2f}%"
+        direction = "up" if chg >= 0 else "down"
         bar = _conviction_bar(self.conviction)
-        chg = f"{self.change_pct:+.2f}%"
+        vol_bar = _pct_bar(self.volume_vs_avg, 0.5, 2.5, width=8)
+
+        header = (
+            f"# {self.ticker}  ·  {self.company}\n"
+            f"`{self.sector}`  ·  `{self.mode}`"
+        )
+        snap = _kv_block(
+            [
+                ("BIAS", bias_tag),
+                ("CONVICTION", f"{bar}  {self.conviction}/5"),
+                ("PRICE", f"${self.last_price:.2f}  {chg_s}  ({direction})"),
+                ("VOLUME", f"{vol_bar}  {self.volume_vs_avg:.2f}x avg"),
+                ("TAPE", self.sparkline),
+            ]
+        )
         return (
-            f"**{self.ticker}** · {self.company}\n"
-            f"`{self.mode}` · {self.sector}\n"
-            f"{bias_emoji} **{self.bias.upper()}** · conviction `{bar}` {self.conviction}/5\n"
-            f"**${self.last_price:.2f}** ({chg}) · vol `{self.volume_vs_avg:.2f}x` avg\n"
-            f"tape `{self.sparkline}`\n\n"
-            f"**Thesis**\n{self.thesis}\n\n"
-            f"**Catalysts**\n{cats}\n\n"
-            f"**Risks**\n{risks}\n\n"
-            f"**Invalidation:** {self.invalidation}\n\n"
+            f"{header}\n\n"
+            f"**Snapshot**\n{snap}\n"
+            f"**Thesis**\n> {self.thesis}\n\n"
+            f"**Catalysts**\n{_numbered(self.catalysts)}\n\n"
+            f"**Risks**\n{_numbered(self.risks)}\n\n"
+            f"**Invalidation**\n> {self.invalidation}\n\n"
+            f"───\n"
             f"_{self.disclaimer}_"
         )
 
@@ -176,10 +226,24 @@ class LevelMap:
 
     def format_message(self) -> str:
         ladder = _level_ladder(self.last_price, self.supports, self.resistances)
+        nearest_s = min(self.supports, key=lambda x: abs(x - self.last_price))
+        nearest_r = min(self.resistances, key=lambda x: abs(x - self.last_price))
+        room_up = (nearest_r - self.last_price) / self.last_price * 100.0
+        room_dn = (self.last_price - nearest_s) / self.last_price * 100.0
+        meta = _kv_block(
+            [
+                ("LAST", f"${self.last_price:.2f}"),
+                ("PIVOT", f"${self.pivot:.2f}"),
+                ("NEAREST R", f"${nearest_r:.2f}  (+{room_up:.1f}%)"),
+                ("NEAREST S", f"${nearest_s:.2f}  (-{room_dn:.1f}%)"),
+            ]
+        )
         return (
-            f"**{self.ticker}** levels · {self.company}\n"
-            f"`{self.mode}` · last **${self.last_price:.2f}** · pivot **${self.pivot:.2f}**\n"
-            f"{ladder}\n"
+            f"# {self.ticker}  ·  Levels\n"
+            f"**{self.company}**  ·  `{self.mode}`\n\n"
+            f"**Map**\n{meta}\n"
+            f"**Ladder**\n{ladder}\n"
+            f"───\n"
             f"_{self.disclaimer}_"
         )
 
@@ -202,14 +266,31 @@ class RiskSnapshot:
         return asdict(self)
 
     def format_message(self) -> str:
-        heat = "hot" if self.atr_pct >= 3.5 else "calm" if self.atr_pct <= 2.0 else "normal"
+        if self.atr_pct >= 3.5:
+            heat = "HOT"
+        elif self.atr_pct <= 2.0:
+            heat = "CALM"
+        else:
+            heat = "NORMAL"
+        atr_bar = _pct_bar(self.atr_pct, 1.0, 6.0, width=8)
+        beta_bar = _pct_bar(self.beta, 0.5, 2.0, width=8)
+        risk_pct = self.risk_per_share / self.last_price * 100.0 if self.last_price else 0.0
+        block = _kv_block(
+            [
+                ("LAST", f"${self.last_price:.2f}"),
+                ("ATR%", f"{atr_bar}  {self.atr_pct:.2f}%  [{heat}]"),
+                ("BETA", f"{beta_bar}  {self.beta:.2f}"),
+                ("STOP", f"${self.suggested_stop:.2f}  (demo)"),
+                ("RISK/SH", f"${self.risk_per_share:.2f}  ({risk_pct:.1f}% of last)"),
+                ("1R TGT", f"${self.r_multiple_1r:.2f}  (demo)"),
+            ]
+        )
         return (
-            f"**{self.ticker}** risk · {self.company}\n"
-            f"`{self.mode}` · last **${self.last_price:.2f}**\n"
-            f"ATR% `{self.atr_pct:.2f}` ({heat}) · beta `{self.beta:.2f}`\n"
-            f"Demo stop **${self.suggested_stop:.2f}** · risk/share **${self.risk_per_share:.2f}**\n"
-            f"1R target (demo) **${self.r_multiple_1r:.2f}**\n"
-            f"{self.position_note}\n\n"
+            f"# {self.ticker}  ·  Risk\n"
+            f"**{self.company}**  ·  `{self.mode}`\n\n"
+            f"**Sizing card**\n{block}\n"
+            f"**Note**\n> {self.position_note}\n\n"
+            f"───\n"
             f"_{self.disclaimer}_"
         )
 
