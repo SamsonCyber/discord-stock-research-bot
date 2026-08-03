@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2
+
+- Split rendering: **CLI** prints boxed plain-text cards (no raw markdown); **Discord** sends real Embeds (color by bias, fields for thesis/catalysts/risks).
+- Bot no longer dumps markdown walls into DMs.
+
 ## 0.4.1
 
 - Research card redesign: snapshot key/value board, blockquote thesis/invalidation, numbered catalysts/risks, visual level ladder with distance %, risk sizing card with heat bars.

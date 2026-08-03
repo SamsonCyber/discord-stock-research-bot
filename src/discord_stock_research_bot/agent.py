@@ -97,10 +97,12 @@ class AgentTurnResult:
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
     intent: str = ""
     tickers: list[str] = field(default_factory=list)
+    # Discord Embed payloads (dict form). CLI ignores these; bot renders them.
+    embeds: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
-        return bool(self.text)
+        return bool(self.text) or bool(self.embeds)
 
 
 def extract_tickers(text: str) -> list[str]:
@@ -204,22 +206,31 @@ def run_turn(user_text: str) -> AgentTurnResult:
     # Cap multi-ticker turns in the public package.
     tickers = tickers[:3]
     parts: list[str] = []
+    embeds: list[dict[str, Any]] = []
 
     for ticker in tickers:
         if intent == "levels":
             calls.append({"name": "levels", "args": {"ticker": ticker}})
-            parts.append(level_map(ticker).format_message())
+            card = level_map(ticker)
+            parts.append(card.format_message())
+            embeds.append(card.as_embed_dict())
         elif intent == "risk":
             calls.append({"name": "risk", "args": {"ticker": ticker}})
-            parts.append(risk_snapshot(ticker).format_message())
+            card = risk_snapshot(ticker)
+            parts.append(card.format_message())
+            embeds.append(card.as_embed_dict())
         else:
             calls.append({"name": "research", "args": {"ticker": ticker}})
-            parts.append(research_brief(ticker).format_message())
+            card = research_brief(ticker)
+            parts.append(card.format_message())
+            embeds.append(card.as_embed_dict())
 
-    body = "\n\n---\n\n".join(parts) + _format_tool_footer(calls)
+    # CLI gets boxed plain text; Discord prefers embeds (bot sends those).
+    body = "\n\n".join(parts) + _format_tool_footer(calls)
     return AgentTurnResult(
         text=body,
         tool_calls=calls,
         intent=intent,
         tickers=tickers,
+        embeds=embeds,
     )
