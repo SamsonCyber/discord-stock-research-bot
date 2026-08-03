@@ -1,0 +1,14 @@
+**NVDA** levels · NVIDIA
+`offline-demo` · last **$128.43** · pivot **$128.43**
+```
+  ▲ $  142.08  resistance
+  ▲ $  137.53  resistance
+  ▲ $  132.98  resistance
+  ▶ $  128.43  ← last
+  ▼ $  123.89  support
+  ▼ $  119.34  support
+  ▼ $  114.79  support
+```
+_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
+
+_tools used: levels_

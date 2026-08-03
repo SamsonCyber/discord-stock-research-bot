@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Discord Stock Research Bot — Interactive Demo</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --panel: #12182b;
+    --discord: #313338;
+    --discord-2: #2b2d31;
+    --text: #dbdee1;
+    --muted: #949ba4;
+    --accent: #5865F2;
+    --cyan: #22d3ee;
+    --green: #23a559;
+    --border: #1e293b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: radial-gradient(1200px 600px at 10% -10%, #1e293b 0%, transparent 50%),
+                radial-gradient(900px 500px at 100% 100%, #164e63 0%, transparent 40%),
+                var(--bg);
+    color: var(--text);
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 28px 18px 60px; }
+  h1 { font-size: 1.75rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); margin: 0 0 22px; }
+  .bar {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    margin-bottom: 16px;
+  }
+  button {
+    border: 1px solid var(--border); background: var(--panel); color: var(--text);
+    border-radius: 999px; padding: 8px 14px; cursor: pointer; font-weight: 600;
+    transition: border-color .15s, transform .1s, background .15s;
+  }
+  button:hover { border-color: var(--cyan); }
+  button.active { background: linear-gradient(90deg, var(--accent), #0ea5e9); color: #041018; border-color: transparent; }
+  .modes button { border-radius: 10px; }
+  .window {
+    background: var(--discord); border-radius: 16px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,.45); border: 1px solid #1f2937;
+  }
+  .title {
+    background: var(--discord-2); padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
+  .title strong { font-size: .95rem; }
+  .title span { color: var(--muted); font-size: .8rem; }
+  .chat { padding: 18px 16px 22px; min-height: 420px; }
+  .msg { display: flex; gap: 12px; margin-bottom: 18px; }
+  .av {
+    width: 40px; height: 40px; border-radius: 50%; flex: 0 0 40px;
+    display: grid; place-items: center; font-weight: 800; font-size: .85rem;
+  }
+  .av.user { background: #ed4245; color: #fff; }
+  .av.bot { background: linear-gradient(135deg, var(--accent), var(--cyan)); color: #041018; }
+  .meta { font-size: .78rem; color: var(--muted); margin-bottom: 4px; }
+  .meta b { color: #f2f3f5; font-size: .92rem; margin-right: 6px; }
+  .bubble {
+    background: var(--discord-2); border-radius: 8px; padding: 12px 14px;
+    border-left: 4px solid var(--accent);
+    white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace;
+    font-size: .86rem; line-height: 1.45; max-width: 100%;
+  }
+  .userline { font-family: "Segoe UI", system-ui, sans-serif; font-size: .98rem; }
+  .foot { margin-top: 16px; color: var(--muted); font-size: .82rem; }
+  code { background: #0f172a; padding: 2px 6px; border-radius: 6px; color: var(--cyan); }
+  a { color: var(--cyan); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Interactive offline demo</h1>
+    <p class="sub">Same engine as <code>python -m discord_stock_research_bot.demo</code>. No network. No token. Pick a ticker and tool.</p>
+    <div class="bar" id="tickers"></div>
+    <div class="bar modes" id="modes"></div>
+    <div class="window">
+      <div class="title">
+        <div class="dot"></div>
+        <strong>Research Bot</strong>
+        <span>Direct Message · allowlisted · offline-demo</span>
+      </div>
+      <div class="chat">
+        <div class="msg">
+          <div class="av user">U</div>
+          <div>
+            <div class="meta"><b>you</b> today</div>
+            <div class="userline" id="userMsg">research AAPL</div>
+          </div>
+        </div>
+        <div class="msg">
+          <div class="av bot">RB</div>
+          <div style="flex:1;min-width:0">
+            <div class="meta"><b>Research Bot</b> APP · today</div>
+            <div class="bubble" id="botMsg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="foot">
+      Demo data is deterministic per ticker — not live markets.
+      Source: <a href="https://github.com/SamsonCyber/discord-stock-research-bot">SamsonCyber/discord-stock-research-bot</a>
+    </p>
+  </div>
+  <script>
+    const DATA = {"AAPL": {"research": "**AAPL** · Apple\n`offline-demo` · Technology\n🟡 **NEUTRAL** · conviction `███░░` 3/5\n**$200.99** (-1.75%) · vol `1.79x` avg\ntape `▇█▇▇▆▆▅▄▄▃▃▁▂▃▃▄`\n\n**Thesis**\nApple (AAPL) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.\n\n**Catalysts**\n  • Range break with expanding volume\n  • Catalyst calendar (earnings / product / event)\n  • Technology leadership change that pulls the name\n\n**Risks**\n  • Whipsaw inside the range\n  • Low-liquidity fake break\n  • Macro headline risk that rewrites the tape\n\n**Invalidation:** Two closes outside $194.96-$207.02 (demo band)\n\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: research_", "levels": "**AAPL** levels · Apple\n`offline-demo` · last **$200.99** · pivot **$200.99**\n```\n  ▲ $  221.84  resistance\n  ▲ $  214.89  resistance\n  ▲ $  207.94  resistance\n  ▶ $  200.99  ← last\n  ▼ $  194.04  support\n  ▼ $  187.09  support\n  ▼ $  180.15  support\n```\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: levels_", "risk": "**AAPL** risk · Apple\n`offline-demo` · last **$200.99**\nATR% `1.27` (calm) · beta `1.18`\nDemo stop **$197.17** · risk/share **$3.82**\n1R target (demo) **$204.81**\nDemo sizing: risk a fixed fraction of capital against the stop distance. Do not size from conviction alone.\n\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: risk_"}, "NVDA": {"research": "**NVDA** · NVIDIA\n`offline-demo` · Technology\n🟡 **NEUTRAL** · conviction `██░░░` 2/5\n**$128.43** (-4.84%) · vol `0.71x` avg\ntape `▄▄▄▇█▇▅▆▅▃▁▁▂▃▆▆`\n\n**Thesis**\nNVIDIA (NVDA) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.\n\n**Catalysts**\n  • Range break with expanding volume\n  • Catalyst calendar (earnings / product / event)\n  • Technology leadership change that pulls the name\n\n**Risks**\n  • Whipsaw inside the range\n  • Low-liquidity fake break\n  • Macro headline risk that rewrites the tape\n\n**Invalidation:** Two closes outside $124.58-$132.29 (demo band)\n\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: research_", "levels": "**NVDA** levels · NVIDIA\n`offline-demo` · last **$128.43** · pivot **$128.43**\n```\n  ▲ $  142.08  resistance\n  ▲ $  137.53  resistance\n  ▲ $  132.98  resistance\n  ▶ $  128.43  ← last\n  ▼ $  123.89  support\n  ▼ $  119.34  support\n  ▼ $  114.79  support\n```\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: levels_", "risk": "**NVDA** risk · NVIDIA\n`offline-demo` · last **$128.43**\nATR% `2.76` (normal) · beta `1.75`\nDemo stop **$123.12** · risk/share **$5.31**\n1R target (demo) **$133.75**\nDemo sizing: risk a fixed fraction of capital against the stop distance. Do not size from conviction alone.\n\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: risk_"}, "TSLA": {"research": "**TSLA** · Tesla\n`offline-demo` · Consumer\n🟢 **BULLISH** · conviction `████░` 4/5\n**$250.37** (-0.14%) · vol `1.27x` avg\ntape `▂▁▁▆▆▃▆▃▂▇▆█▇▇▅▅`\n\n**Thesis**\nTesla (TSLA) prints constructive structure in this offline model: relative strength holds while consumer stays bid. Lean long only if price defends near support and volume stays above average.\n\n**Catalysts**\n  • Consumer leadership continuing into the next catalyst window\n  • Multiple expansion if guidance / narrative holds\n  • Technical reclaim of the recent range high on expanding volume\n\n**Risks**\n  • Earnings or guidance miss vs quiet tape\n  • Sector rotation out of consumer\n  • Break of structure under nearest support with volume\n\n**Invalidation:** Daily close below $235.35 (demo level)\n\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: research_", "levels": "**TSLA** levels · Tesla\n`offline-demo` · last **$250.37** · pivot **$250.37**\n```\n  ▲ $  270.90  resistance\n  ▲ $  264.06  resistance\n  ▲ $  257.21  resistance\n  ▶ $  250.37  ← last\n  ▼ $  243.52  support\n  ▼ $  236.68  support\n  ▼ $  229.84  support\n```\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: levels_", "risk": "**TSLA** risk · Tesla\n`offline-demo` · last **$250.37**\nATR% `3.63` (hot) · beta `1.34`\nDemo stop **$236.74** · risk/share **$13.62**\n1R target (demo) **$263.99**\nDemo sizing: risk a fixed fraction of capital against the stop distance. Do not size from conviction alone.\n\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: risk_"}, "MSFT": {"research": "**MSFT** · Microsoft\n`offline-demo` · Technology\n🟡 **NEUTRAL** · conviction `█████` 5/5\n**$414.59** (-0.85%) · vol `1.09x` avg\ntape `█▆▅▅▅▄▄▃▃▄▅▄▃▂▂▁`\n\n**Thesis**\nMicrosoft (MSFT) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.\n\n**Catalysts**\n  • Range break with expanding volume\n  • Catalyst calendar (earnings / product / event)\n  • Technology leadership change that pulls the name\n\n**Risks**\n  • Whipsaw inside the range\n  • Low-liquidity fake break\n  • Macro headline risk that rewrites the tape\n\n**Invalidation:** Two closes outside $402.15-$427.02 (demo band)\n\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: research_", "levels": "**MSFT** levels · Microsoft\n`offline-demo` · last **$414.59** · pivot **$414.59**\n```\n  ▲ $  449.98  resistance\n  ▲ $  438.19  resistance\n  ▲ $  426.39  resistance\n  ▶ $  414.59  ← last\n  ▼ $  402.79  support\n  ▼ $  390.99  support\n  ▼ $  379.19  support\n```\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: levels_", "risk": "**MSFT** risk · Microsoft\n`offline-demo` · last **$414.59**\nATR% `1.57` (calm) · beta `1.48`\nDemo stop **$404.83** · risk/share **$9.75**\n1R target (demo) **$424.34**\nDemo sizing: risk a fixed fraction of capital against the stop distance. Do not size from conviction alone.\n\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: risk_"}, "AMD": {"research": "**AMD** · Advanced Micro Devices\n`offline-demo` · Technology\n🟡 **NEUTRAL** · conviction `███░░` 3/5\n**$142.85** (-0.59%) · vol `0.85x` avg\ntape `▂▆▁▁▂▃▇▇▆▆▇█▅▃▁▃`\n\n**Thesis**\nAdvanced Micro Devices (AMD) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.\n\n**Catalysts**\n  • Range break with expanding volume\n  • Catalyst calendar (earnings / product / event)\n  • Technology leadership change that pulls the name\n\n**Risks**\n  • Whipsaw inside the range\n  • Low-liquidity fake break\n  • Macro headline risk that rewrites the tape\n\n**Invalidation:** Two closes outside $138.56-$147.13 (demo band)\n\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: research_", "levels": "**AMD** levels · Advanced Micro Devices\n`offline-demo` · last **$142.85** · pivot **$142.85**\n```\n  ▲ $  150.15  resistance\n  ▲ $  147.71  resistance\n  ▲ $  145.28  resistance\n  ▶ $  142.85  ← last\n  ▼ $  140.41  support\n  ▼ $  137.98  support\n  ▼ $  135.54  support\n```\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: levels_", "risk": "**AMD** risk · Advanced Micro Devices\n`offline-demo` · last **$142.85**\nATR% `3.66` (hot) · beta `1.34`\nDemo stop **$135.01** · risk/share **$7.84**\n1R target (demo) **$150.68**\nDemo sizing: risk a fixed fraction of capital against the stop distance. Do not size from conviction alone.\n\n_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._\n\n_tools used: risk_"}};
+    const tickers = Object.keys(DATA);
+    let ticker = 'AAPL';
+    let mode = 'research';
+    const prompts = {
+      research: t => `research ${t}`,
+      levels: t => `levels on ${t}`,
+      risk: t => `risk for ${t}`,
+    };
+    const tEl = document.getElementById('tickers');
+    const mEl = document.getElementById('modes');
+    function renderButtons() {
+      tEl.innerHTML = '';
+      tickers.forEach(t => {
+        const b = document.createElement('button');
+        b.textContent = t;
+        b.className = t === ticker ? 'active' : '';
+        b.onclick = () => { ticker = t; paint(); };
+        tEl.appendChild(b);
+      });
+      mEl.innerHTML = '';
+      ['research','levels','risk'].forEach(m => {
+        const b = document.createElement('button');
+        b.textContent = m;
+        b.className = m === mode ? 'active' : '';
+        b.onclick = () => { mode = m; paint(); };
+        mEl.appendChild(b);
+      });
+    }
+    function paint() {
+      renderButtons();
+      document.getElementById('userMsg').textContent = prompts[mode](ticker);
+      document.getElementById('botMsg').textContent = DATA[ticker][mode];
+    }
+    paint();
+  </script>
+</body>
+</html>

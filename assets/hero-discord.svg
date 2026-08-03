@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 720" role="img" aria-label="Discord DM research demo">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0c0e16"/>
+      <stop offset="50%" stop-color="#12141f"/>
+      <stop offset="100%" stop-color="#0b1020"/>
+    </linearGradient>
+    <linearGradient id="blurble" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#5865F2"/>
+      <stop offset="100%" stop-color="#00D4FF"/>
+    </linearGradient>
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+    <clipPath id="round">
+      <rect x="40" y="70" width="900" height="600" rx="18"/>
+    </clipPath>
+  </defs>
+  <rect width="980" height="720" fill="url(#bg)"/>
+  <circle cx="120" cy="80" r="160" fill="#5865F2" opacity="0.12"/>
+  <circle cx="860" cy="640" r="200" fill="#00D4FF" opacity="0.08"/>
+
+  <text x="48" y="42" fill="#f1f5f9" font-family="Segoe UI, system-ui, sans-serif" font-size="22" font-weight="700">
+    Natural language. Tools run. Research lands.
+  </text>
+  <text x="48" y="62" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="13">
+    Offline demo engine · deterministic · no API keys
+  </text>
+
+  <g filter="url(#soft)" clip-path="url(#round)">
+    <rect x="40" y="70" width="900" height="600" rx="18" fill="#313338"/>
+    <rect x="40" y="70" width="900" height="48" fill="#2b2d31"/>
+    <circle cx="68" cy="94" r="12" fill="#5865F2"/>
+    <text x="88" y="99" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="15" font-weight="700">Research Bot</text>
+    <text x="200" y="99" fill="#b5bac1" font-family="Segoe UI, system-ui, sans-serif" font-size="12">Direct Message · allowlisted</text>
+    <text x="900" y="99" text-anchor="end" fill="#23a559" font-family="Segoe UI, system-ui, sans-serif" font-size="12">online</text>
+
+    <circle cx="78" cy="160" r="18" fill="#ed4245"/>
+    <text x="78" y="165" text-anchor="middle" fill="#fff" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="700">U</text>
+    <text x="110" y="152" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">you</text>
+    <text x="150" y="152" fill="#949ba4" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Today at 9:41 AM</text>
+    <text x="110" y="176" fill="#dbdee1" font-family="Segoe UI, system-ui, sans-serif" font-size="15">research AAPL</text>
+
+    <circle cx="78" cy="230" r="18" fill="url(#blurble)"/>
+    <text x="78" y="235" text-anchor="middle" fill="#0b1020" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="800">RB</text>
+    <text x="110" y="222" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">Research Bot</text>
+    <text x="220" y="222" fill="#5865F2" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="700">APP</text>
+    <text x="255" y="222" fill="#949ba4" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Today at 9:41 AM</text>
+
+    <rect x="110" y="238" width="780" height="390" rx="8" fill="#2b2d31"/>
+    <rect x="110" y="238" width="6" height="390" rx="3" fill="url(#blurble)"/>
+    <foreignObject x="128" y="250" width="750" height="365">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Segoe UI,system-ui,sans-serif;font-size:13.5px;line-height:1.45;color:#dbdee1;white-space:pre-wrap;">
+        **AAPL** · Apple<br/>`offline-demo` · Technology<br/>🟡 **NEUTRAL** · conviction `███░░` 3/5<br/>**$200.99** (-1.75%) · vol `1.79x` avg<br/>tape `▇█▇▇▆▆▅▄▄▃▃▁▂▃▃▄`<br/>&nbsp;<br/>**Thesis**<br/>Apple (AAPL) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.<br/>&nbsp;<br/>**Catalysts**<br/>  • Range break with expanding volume<br/>  • Catalyst calendar (earnings / product / event)<br/>  • Technology leadership change that pulls the name<br/>&nbsp;<br/>**Risks**<br/>  • Whipsaw inside the range<br/>  • Low-liquidity fake break<br/>  • Macro headline risk that rewrites the tape<br/>&nbsp;<br/>**Invalidation:** Two closes outside $194.96-$207.02 (demo band)<br/>&nbsp;<br/>_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._<br/>&nbsp;<br/>_tools used: research_
+      </div>
+    </foreignObject>
+  </g>
+</svg>

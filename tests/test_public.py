@@ -107,15 +107,25 @@ def test_package_has_no_forbidden_imports() -> None:
 def test_showcase_assets_exist() -> None:
     """GitHub front door needs in-repo visual + sample reply without running a server."""
     root = Path(__file__).resolve().parents[1]
-    arch = root / "assets" / "architecture.svg"
-    sample = root / "docs" / "samples" / "aapl-research.txt"
-    assert arch.is_file(), "assets/architecture.svg missing"
-    svg = arch.read_text(encoding="utf-8")
-    assert "<svg" in svg
-    assert "Discord" in svg or "research" in svg.lower()
-    assert sample.is_file(), "docs/samples/aapl-research.txt missing"
-    body = sample.read_text(encoding="utf-8")
+    for rel in (
+        "assets/architecture.svg",
+        "assets/hero-discord.svg",
+        "assets/banner.svg",
+        "assets/interactive-demo.html",
+        "docs/samples/aapl-research.txt",
+    ):
+        path = root / rel
+        assert path.is_file(), f"missing {rel}"
+    hero = (root / "assets" / "hero-discord.svg").read_text(encoding="utf-8")
+    assert "<svg" in hero
+    assert "research AAPL" in hero
+    demo = (root / "assets" / "interactive-demo.html").read_text(encoding="utf-8")
+    assert "const DATA" in demo
+    assert "AAPL" in demo
+    body = (root / "docs" / "samples" / "aapl-research.txt").read_text(encoding="utf-8")
     assert "AAPL" in body
+    assert "Apple" in body
+    assert "Technology" in body
     assert "tools used" in body.lower()
     assert "offline-demo" in body
 
@@ -126,18 +136,33 @@ def test_sample_reply_matches_live_demo_engine() -> None:
     sample = (root / "docs" / "samples" / "aapl-research.txt").read_text(encoding="utf-8")
     live = run_turn("research AAPL").text
     assert sample.strip() == live.strip()
-    # Second call stays stable (deterministic offline engine)
     again = run_turn("research AAPL").text
     assert again.strip() == live.strip()
+
+
+def test_known_ticker_meta_is_intentional() -> None:
+    """Famous symbols must not look randomly sector-labeled in the public demo."""
+    brief = research_brief("AAPL")
+    assert brief.company == "Apple"
+    assert brief.sector == "Technology"
+    assert "tape `" in brief.format_message() or "tape" in brief.format_message()
+    assert brief.sparkline
+    levels = run_turn("levels on NVDA")
+    assert "NVIDIA" in levels.text
+    assert "resistance" in levels.text.lower()
 
 
 def test_readme_points_at_showcase_assets() -> None:
     root = Path(__file__).resolve().parents[1]
     readme = (root / "README.md").read_text(encoding="utf-8")
+    assert "assets/hero-discord.svg" in readme
+    assert "assets/banner.svg" in readme
+    assert "assets/interactive-demo.html" in readme
     assert "assets/architecture.svg" in readme
     assert "docs/samples/aapl-research.txt" in readme
     assert "docs/PRODUCTION_TOOLS.md" in readme
     assert "python -m discord_stock_research_bot.demo" in readme
+    assert "scripts/build_showcase.py" in readme
 
 
 def test_source_has_no_lab_markers() -> None:

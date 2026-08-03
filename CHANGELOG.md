@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- Research engine upgrade: company names, real sectors for known tickers, conviction bars, sparklines, level ladders, richer risk cards.
+- Product front door: Discord DM hero mock, social banner, interactive offline demo HTML (baked engine payloads).
+- `scripts/build_showcase.py` regenerates samples + visuals from the live agent path.
+- Showcase tests cover hero assets, known-ticker meta, and sample lock to `run_turn`.
+
 ## 0.3.1
 
 - Presentation pass: hero README, architecture SVG, real sample reply from offline demo.

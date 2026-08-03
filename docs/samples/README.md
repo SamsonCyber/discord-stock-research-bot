@@ -17,5 +17,11 @@ python -c "from discord_stock_research_bot.agent import run_turn; print(run_turn
 | File | Command |
 |---|---|
 | [aapl-research.txt](aapl-research.txt) | `research AAPL` |
+| [nvda-levels.txt](nvda-levels.txt) | `levels on NVDA` |
+| [tsla-risk.txt](tsla-risk.txt) | `risk for TSLA` |
 
 Deterministic offline engine: same ticker always yields the same brief.
+
+```bash
+python scripts/build_showcase.py
+```
