@@ -145,11 +145,14 @@ def test_known_ticker_meta_is_intentional() -> None:
     brief = research_brief("AAPL")
     assert brief.company == "Apple"
     assert brief.sector == "Technology"
-    assert "tape `" in brief.format_message() or "tape" in brief.format_message()
+    msg = brief.format_message()
+    assert "TAPE" in msg or "tape" in msg.lower()
     assert brief.sparkline
+    assert "Snapshot" in msg
+    assert "Invalidation" in msg
     levels = run_turn("levels on NVDA")
     assert "NVIDIA" in levels.text
-    assert "resistance" in levels.text.lower()
+    assert "Ladder" in levels.text or "LAST" in levels.text
 
 
 def test_readme_points_at_showcase_assets() -> None:

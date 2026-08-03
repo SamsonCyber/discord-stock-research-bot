@@ -1,14 +1,24 @@
-**NVDA** levels · NVIDIA
-`offline-demo` · last **$128.43** · pivot **$128.43**
+# NVDA  ·  Levels
+**NVIDIA**  ·  `offline-demo`
+
+**Map**
 ```
-  ▲ $  142.08  resistance
-  ▲ $  137.53  resistance
-  ▲ $  132.98  resistance
-  ▶ $  128.43  ← last
-  ▼ $  123.89  support
-  ▼ $  119.34  support
-  ▼ $  114.79  support
+ LAST       $128.43
+ PIVOT      $128.43
+ NEAREST R  $132.98  (+3.5%)
+ NEAREST S  $123.89  (-3.5%)
 ```
+**Ladder**
+```
+ ············▲  $  142.08  R1  +10.6%
+ ··········▲··  $  137.53  R2  +7.1%
+ ········▲····  $  132.98  R3  +3.5%
+ ······●······  $  128.43  ◀ LAST
+ ····▼········  $  123.89  S1  -3.5%
+ ··▼··········  $  119.34  S2  -7.1%
+ ▼············  $  114.79  S3  -10.6%
+```
+───
 _Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
 
 _tools used: levels_
