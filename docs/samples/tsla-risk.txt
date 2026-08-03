@@ -1,19 +1,22 @@
-# TSLA  ·  Risk
-**Tesla**  ·  `offline-demo`
-
-**Sizing card**
-```
- LAST     $250.37
- ATR%     ████░░░░  3.63%  [HOT]
- BETA     ████░░░░  1.34
- STOP     $236.74  (demo)
- RISK/SH  $13.62  (5.4% of last)
- 1R TGT   $263.99  (demo)
-```
-**Note**
-> Demo sizing: risk a fixed fraction of capital against the stop distance. Do not size from conviction alone.
-
-───
-_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
+┌────────────────────────────────────────────┐
+│ TSLA  ·  RISK                              │
+│ Tesla  ·  offline-demo                     │
+├────────────────────────────────────────────┤
+│  LAST     $250.37                          │
+│  ATR%     ████░░░░  3.63%  [HOT]           │
+│  BETA     ████░░░░  1.34                   │
+│  STOP     $236.74  (demo)                  │
+│  RISK/SH  $13.62  (5.4% of last)           │
+│  1R TGT   $263.99  (demo)                  │
+├────────────────────────────────────────────┤
+│ NOTE:                                      │
+│   Demo sizing: risk a fixed fraction of    │
+│   capital against the stop distance. Do not│
+│   size from conviction alone.              │
+├────────────────────────────────────────────┤
+│   Demo research data only. Offline /       │
+│   deterministic. Not live market data. Not │
+│   financial advice.                        │
+└────────────────────────────────────────────┘
 
 _tools used: risk_

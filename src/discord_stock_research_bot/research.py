@@ -110,46 +110,115 @@ def _pct_bar(value: float, lo: float, hi: float, width: int = 10) -> str:
     return "█" * filled + "░" * (width - filled)
 
 
-def _level_ladder(last: float, supports: list[float], resistances: list[float]) -> str:
+# Terminal cards: no markdown. Discord uses Embeds (see as_embed_dict).
+_CARD_W = 46
+
+_BIAS_COLOR = {
+    "bullish": 0x57F287,  # Discord green
+    "bearish": 0xED4245,  # Discord red
+    "neutral": 0xFEE75C,  # Discord yellow
+}
+_LEVEL_COLOR = 0x5865F2
+_RISK_COLOR = 0xEB459E
+
+
+def _wrap(text: str, width: int) -> list[str]:
+    words = (text or "").split()
+    if not words:
+        return [""]
+    lines: list[str] = []
+    cur = words[0]
+    for w in words[1:]:
+        if len(cur) + 1 + len(w) <= width:
+            cur = f"{cur} {w}"
+        else:
+            lines.append(cur)
+            cur = w
+    lines.append(cur)
+    return lines
+
+
+def _box(title: str, body_lines: list[str], *, width: int = _CARD_W) -> str:
+    """Monospace card that looks right in a terminal (no Discord markdown)."""
+    inner = width - 2
+    top = "┌" + "─" * inner + "┐"
+    mid = "├" + "─" * inner + "┤"
+    bot = "└" + "─" * inner + "┘"
+
+    def row(text: str = "") -> str:
+        t = text[:inner]
+        return "│" + t.ljust(inner) + "│"
+
+    out = [top]
+    # Title can be two lines
+    for part in title.split("\n"):
+        out.append(row(f" {part}"))
+    out.append(mid)
+    for line in body_lines:
+        if line == "---":
+            out.append(mid)
+            continue
+        if not line:
+            out.append(row(""))
+            continue
+        # Section headers flush left
+        if line.endswith(":") and line.upper() == line:
+            out.append(row(f" {line}"))
+            continue
+        # Pre-aligned rows (kv / ladder): keep spacing, do not strip
+        if line.startswith("  "):
+            if len(line) <= inner:
+                out.append(row(line))
+            else:
+                # Long catalyst/risk lines: hang under the number
+                prefix = "   "
+                chunks = _wrap(line.strip(), inner - len(prefix))
+                for chunk in chunks:
+                    out.append(row(f"{prefix}{chunk}"))
+            continue
+        for chunk in _wrap(line, inner - 1):
+            out.append(row(f" {chunk}"))
+    out.append(bot)
+    return "\n".join(out)
+
+
+def _level_ladder_lines(last: float, supports: list[float], resistances: list[float]) -> list[str]:
     rows: list[tuple[float, str, str]] = []
     for i, r in enumerate(sorted(resistances, reverse=True), start=1):
         dist = (r - last) / last * 100.0
-        rows.append((r, "R", f"R{i}  +{dist:.1f}%"))
+        rows.append((r, "R", f"R{i} +{dist:.1f}%"))
     rows.append((last, "P", "LAST"))
     for i, s in enumerate(sorted(supports, reverse=True), start=1):
         dist = (s - last) / last * 100.0
-        rows.append((s, "S", f"S{i}  {dist:.1f}%"))
+        rows.append((s, "S", f"S{i} {dist:.1f}%"))
 
-    # Visual width proportional to distance from mid of range
     prices = [p for p, _, _ in rows]
     lo, hi = min(prices), max(prices)
     span = max(hi - lo, 1e-9)
-    lines = ["```"]
+    lines: list[str] = []
     for price, kind, label in rows:
-        pos = int(round((price - lo) / span * 12))
-        track = list("·" * 13)
+        pos = int(round((price - lo) / span * 10))
+        track = list("·" * 11)
         track[pos] = "●" if kind == "P" else ("▲" if kind == "R" else "▼")
         rail = "".join(track)
         if kind == "P":
-            lines.append(f" {rail}  ${price:>8.2f}  ◀ LAST")
+            lines.append(f"  {rail} ${price:>8.2f}  << LAST")
         else:
-            lines.append(f" {rail}  ${price:>8.2f}  {label}")
-    lines.append("```")
-    return "\n".join(lines)
+            lines.append(f"  {rail} ${price:>8.2f}  {label}")
+    return lines
 
 
-def _kv_block(rows: list[tuple[str, str]]) -> str:
-    """Aligned key/value block inside a Discord code fence."""
+def _kv_lines(rows: list[tuple[str, str]]) -> list[str]:
     key_w = max(len(k) for k, _ in rows)
-    lines = ["```"]
-    for k, v in rows:
-        lines.append(f" {k:<{key_w}}  {v}")
-    lines.append("```")
-    return "\n".join(lines)
+    return [f"  {k:<{key_w}}  {v}" for k, v in rows]
 
 
-def _numbered(items: list[str]) -> str:
-    return "\n".join(f"`{i}`  {item}" for i, item in enumerate(items, start=1))
+def _bias_label(bias: str) -> str:
+    return {
+        "bullish": "BULL  ▲",
+        "bearish": "BEAR  ▼",
+        "neutral": "NEUTRAL  ◆",
+    }.get(bias, bias.upper())
 
 
 @dataclass(frozen=True)
@@ -174,40 +243,76 @@ class ResearchBrief:
         return asdict(self)
 
     def format_message(self) -> str:
-        bias_tag = {
-            "bullish": "BULL  ▲",
-            "bearish": "BEAR  ▼",
-            "neutral": "NEUTRAL  ◆",
-        }.get(self.bias, self.bias.upper())
-        chg = self.change_pct
-        chg_s = f"{chg:+.2f}%"
-        direction = "up" if chg >= 0 else "down"
+        """Terminal / plain-text card. No markdown (looks correct in CLI)."""
+        chg_s = f"{self.change_pct:+.2f}%"
+        direction = "up" if self.change_pct >= 0 else "down"
         bar = _conviction_bar(self.conviction)
         vol_bar = _pct_bar(self.volume_vs_avg, 0.5, 2.5, width=8)
+        body: list[str] = []
+        body.extend(
+            _kv_lines(
+                [
+                    ("BIAS", _bias_label(self.bias)),
+                    ("CONVICTION", f"{bar}  {self.conviction}/5"),
+                    ("PRICE", f"${self.last_price:.2f}  {chg_s}  ({direction})"),
+                    ("VOLUME", f"{vol_bar}  {self.volume_vs_avg:.2f}x avg"),
+                    ("TAPE", self.sparkline),
+                ]
+            )
+        )
+        body.append("---")
+        body.append("THESIS:")
+        body.append(f"  {self.thesis}")
+        body.append("")
+        body.append("CATALYSTS:")
+        for i, c in enumerate(self.catalysts, 1):
+            body.append(f"  {i}. {c}")
+        body.append("")
+        body.append("RISKS:")
+        for i, r in enumerate(self.risks, 1):
+            body.append(f"  {i}. {r}")
+        body.append("")
+        body.append("INVALIDATION:")
+        body.append(f"  {self.invalidation}")
+        body.append("---")
+        body.append(f"  {self.disclaimer}")
+        title = f"{self.ticker}  ·  {self.company}\n{self.sector}  ·  {self.mode}"
+        return _box(title, body)
 
-        header = (
-            f"# {self.ticker}  ·  {self.company}\n"
-            f"`{self.sector}`  ·  `{self.mode}`"
-        )
-        snap = _kv_block(
-            [
-                ("BIAS", bias_tag),
-                ("CONVICTION", f"{bar}  {self.conviction}/5"),
-                ("PRICE", f"${self.last_price:.2f}  {chg_s}  ({direction})"),
-                ("VOLUME", f"{vol_bar}  {self.volume_vs_avg:.2f}x avg"),
-                ("TAPE", self.sparkline),
-            ]
-        )
-        return (
-            f"{header}\n\n"
-            f"**Snapshot**\n{snap}\n"
-            f"**Thesis**\n> {self.thesis}\n\n"
-            f"**Catalysts**\n{_numbered(self.catalysts)}\n\n"
-            f"**Risks**\n{_numbered(self.risks)}\n\n"
-            f"**Invalidation**\n> {self.invalidation}\n\n"
-            f"───\n"
-            f"_{self.disclaimer}_"
-        )
+    def as_embed_dict(self) -> dict:
+        """Discord Embed payload (render as a real embed, not raw markdown)."""
+        bar = _conviction_bar(self.conviction)
+        chg_s = f"{self.change_pct:+.2f}%"
+        cats = "\n".join(f"**{i}.** {c}" for i, c in enumerate(self.catalysts, 1))
+        risks = "\n".join(f"**{i}.** {r}" for i, r in enumerate(self.risks, 1))
+        return {
+            "title": f"{self.ticker}  ·  {self.company}",
+            "description": f"**{self.sector}** · `{self.mode}`\n`{self.sparkline}`",
+            "color": _BIAS_COLOR.get(self.bias, 0x99AAB5),
+            "fields": [
+                {"name": "Bias", "value": _bias_label(self.bias), "inline": True},
+                {
+                    "name": "Conviction",
+                    "value": f"{bar}  **{self.conviction}/5**",
+                    "inline": True,
+                },
+                {
+                    "name": "Price",
+                    "value": f"**${self.last_price:.2f}**  ({chg_s})",
+                    "inline": True,
+                },
+                {
+                    "name": "Volume",
+                    "value": f"**{self.volume_vs_avg:.2f}x** avg",
+                    "inline": True,
+                },
+                {"name": "Thesis", "value": self.thesis[:1024], "inline": False},
+                {"name": "Catalysts", "value": cats[:1024], "inline": False},
+                {"name": "Risks", "value": risks[:1024], "inline": False},
+                {"name": "Invalidation", "value": self.invalidation[:1024], "inline": False},
+            ],
+            "footer": {"text": self.disclaimer[:2048]},
+        }
 
 
 @dataclass(frozen=True)
@@ -225,27 +330,64 @@ class LevelMap:
         return asdict(self)
 
     def format_message(self) -> str:
-        ladder = _level_ladder(self.last_price, self.supports, self.resistances)
         nearest_s = min(self.supports, key=lambda x: abs(x - self.last_price))
         nearest_r = min(self.resistances, key=lambda x: abs(x - self.last_price))
         room_up = (nearest_r - self.last_price) / self.last_price * 100.0
         room_dn = (self.last_price - nearest_s) / self.last_price * 100.0
-        meta = _kv_block(
-            [
-                ("LAST", f"${self.last_price:.2f}"),
-                ("PIVOT", f"${self.pivot:.2f}"),
-                ("NEAREST R", f"${nearest_r:.2f}  (+{room_up:.1f}%)"),
-                ("NEAREST S", f"${nearest_s:.2f}  (-{room_dn:.1f}%)"),
-            ]
+        body: list[str] = []
+        body.extend(
+            _kv_lines(
+                [
+                    ("LAST", f"${self.last_price:.2f}"),
+                    ("PIVOT", f"${self.pivot:.2f}"),
+                    ("NEAREST R", f"${nearest_r:.2f}  (+{room_up:.1f}%)"),
+                    ("NEAREST S", f"${nearest_s:.2f}  (-{room_dn:.1f}%)"),
+                ]
+            )
         )
-        return (
-            f"# {self.ticker}  ·  Levels\n"
-            f"**{self.company}**  ·  `{self.mode}`\n\n"
-            f"**Map**\n{meta}\n"
-            f"**Ladder**\n{ladder}\n"
-            f"───\n"
-            f"_{self.disclaimer}_"
+        body.append("---")
+        body.append("LADDER:")
+        body.extend(_level_ladder_lines(self.last_price, self.supports, self.resistances))
+        body.append("---")
+        body.append(f"  {self.disclaimer}")
+        title = f"{self.ticker}  ·  LEVELS\n{self.company}  ·  {self.mode}"
+        return _box(title, body)
+
+    def as_embed_dict(self) -> dict:
+        nearest_s = min(self.supports, key=lambda x: abs(x - self.last_price))
+        nearest_r = min(self.resistances, key=lambda x: abs(x - self.last_price))
+        room_up = (nearest_r - self.last_price) / self.last_price * 100.0
+        room_dn = (self.last_price - nearest_s) / self.last_price * 100.0
+        ladder = "\n".join(
+            _level_ladder_lines(self.last_price, self.supports, self.resistances)
         )
+        return {
+            "title": f"{self.ticker}  ·  Levels",
+            "description": f"**{self.company}** · `{self.mode}`",
+            "color": _LEVEL_COLOR,
+            "fields": [
+                {
+                    "name": "Last",
+                    "value": f"**${self.last_price:.2f}**",
+                    "inline": True,
+                },
+                {"name": "Pivot", "value": f"**${self.pivot:.2f}**", "inline": True},
+                {
+                    "name": "Nearest R / S",
+                    "value": (
+                        f"R **${nearest_r:.2f}** (+{room_up:.1f}%)\n"
+                        f"S **${nearest_s:.2f}** (-{room_dn:.1f}%)"
+                    ),
+                    "inline": False,
+                },
+                {
+                    "name": "Ladder",
+                    "value": f"```\n{ladder}\n```"[:1024],
+                    "inline": False,
+                },
+            ],
+            "footer": {"text": self.disclaimer[:2048]},
+        }
 
 
 @dataclass(frozen=True)
@@ -275,24 +417,76 @@ class RiskSnapshot:
         atr_bar = _pct_bar(self.atr_pct, 1.0, 6.0, width=8)
         beta_bar = _pct_bar(self.beta, 0.5, 2.0, width=8)
         risk_pct = self.risk_per_share / self.last_price * 100.0 if self.last_price else 0.0
-        block = _kv_block(
-            [
-                ("LAST", f"${self.last_price:.2f}"),
-                ("ATR%", f"{atr_bar}  {self.atr_pct:.2f}%  [{heat}]"),
-                ("BETA", f"{beta_bar}  {self.beta:.2f}"),
-                ("STOP", f"${self.suggested_stop:.2f}  (demo)"),
-                ("RISK/SH", f"${self.risk_per_share:.2f}  ({risk_pct:.1f}% of last)"),
-                ("1R TGT", f"${self.r_multiple_1r:.2f}  (demo)"),
-            ]
+        body: list[str] = []
+        body.extend(
+            _kv_lines(
+                [
+                    ("LAST", f"${self.last_price:.2f}"),
+                    ("ATR%", f"{atr_bar}  {self.atr_pct:.2f}%  [{heat}]"),
+                    ("BETA", f"{beta_bar}  {self.beta:.2f}"),
+                    ("STOP", f"${self.suggested_stop:.2f}  (demo)"),
+                    ("RISK/SH", f"${self.risk_per_share:.2f}  ({risk_pct:.1f}% of last)"),
+                    ("1R TGT", f"${self.r_multiple_1r:.2f}  (demo)"),
+                ]
+            )
         )
-        return (
-            f"# {self.ticker}  ·  Risk\n"
-            f"**{self.company}**  ·  `{self.mode}`\n\n"
-            f"**Sizing card**\n{block}\n"
-            f"**Note**\n> {self.position_note}\n\n"
-            f"───\n"
-            f"_{self.disclaimer}_"
-        )
+        body.append("---")
+        body.append("NOTE:")
+        body.append(f"  {self.position_note}")
+        body.append("---")
+        body.append(f"  {self.disclaimer}")
+        title = f"{self.ticker}  ·  RISK\n{self.company}  ·  {self.mode}"
+        return _box(title, body)
+
+    def as_embed_dict(self) -> dict:
+        if self.atr_pct >= 3.5:
+            heat = "HOT"
+        elif self.atr_pct <= 2.0:
+            heat = "CALM"
+        else:
+            heat = "NORMAL"
+        atr_bar = _pct_bar(self.atr_pct, 1.0, 6.0, width=8)
+        beta_bar = _pct_bar(self.beta, 0.5, 2.0, width=8)
+        risk_pct = self.risk_per_share / self.last_price * 100.0 if self.last_price else 0.0
+        return {
+            "title": f"{self.ticker}  ·  Risk",
+            "description": f"**{self.company}** · `{self.mode}`",
+            "color": _RISK_COLOR,
+            "fields": [
+                {
+                    "name": "Last",
+                    "value": f"**${self.last_price:.2f}**",
+                    "inline": True,
+                },
+                {
+                    "name": "ATR%",
+                    "value": f"{atr_bar}\n**{self.atr_pct:.2f}%** [{heat}]",
+                    "inline": True,
+                },
+                {
+                    "name": "Beta",
+                    "value": f"{beta_bar}\n**{self.beta:.2f}**",
+                    "inline": True,
+                },
+                {
+                    "name": "Stop (demo)",
+                    "value": f"**${self.suggested_stop:.2f}**",
+                    "inline": True,
+                },
+                {
+                    "name": "Risk / share",
+                    "value": f"**${self.risk_per_share:.2f}** ({risk_pct:.1f}%)",
+                    "inline": True,
+                },
+                {
+                    "name": "1R target (demo)",
+                    "value": f"**${self.r_multiple_1r:.2f}**",
+                    "inline": True,
+                },
+                {"name": "Note", "value": self.position_note[:1024], "inline": False},
+            ],
+            "footer": {"text": self.disclaimer[:2048]},
+        }
 
 
 def research_brief(ticker: str) -> ResearchBrief:

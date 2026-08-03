@@ -36,11 +36,13 @@ def main(argv: list[str] | None = None) -> int:
                     "tickers": result.tickers,
                     "tool_calls": result.tool_calls,
                     "text": result.text,
+                    "embeds": result.embeds,
                 },
                 indent=2,
             )
         )
     else:
+        # Terminal: boxed plain-text cards (no markdown). Discord uses embeds.
         print(result.text)
     return 0
 

@@ -1,31 +1,39 @@
-# AAPL  ·  Apple
-`Technology`  ·  `offline-demo`
-
-**Snapshot**
-```
- BIAS        NEUTRAL  ◆
- CONVICTION  ███░░  3/5
- PRICE       $200.99  -1.75%  (down)
- VOLUME      █████░░░  1.79x avg
- TAPE        ▇█▇▇▆▆▅▄▄▃▃▁▂▃▃▄▃▄▃▂
-```
-**Thesis**
-> Apple (AAPL) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.
-
-**Catalysts**
-`1`  Range break with expanding volume
-`2`  Catalyst calendar (earnings / product / event)
-`3`  Technology leadership change that pulls the name
-
-**Risks**
-`1`  Whipsaw inside the range
-`2`  Low-liquidity fake break
-`3`  Macro headline risk that rewrites the tape
-
-**Invalidation**
-> Two closes outside $194.96-$207.02 (demo band)
-
-───
-_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
+┌────────────────────────────────────────────┐
+│ AAPL  ·  Apple                             │
+│ Technology  ·  offline-demo                │
+├────────────────────────────────────────────┤
+│  BIAS        NEUTRAL  ◆                    │
+│  CONVICTION  ███░░  3/5                    │
+│  PRICE       $200.99  -1.75%  (down)       │
+│  VOLUME      █████░░░  1.79x avg           │
+│  TAPE        ▇█▇▇▆▆▅▄▄▃▃▁▂▃▃▄▃▄▃▂          │
+├────────────────────────────────────────────┤
+│ THESIS:                                    │
+│   Apple (AAPL) is range-bound in this      │
+│   offline model. No edge until a clean     │
+│   break with volume. Size small or wait;   │
+│   fake breaks are the default.             │
+│                                            │
+│ CATALYSTS:                                 │
+│  1. Range break with expanding volume      │
+│   2. Catalyst calendar (earnings / product │
+│   / event)                                 │
+│   3. Technology leadership change that     │
+│   pulls the name                           │
+│                                            │
+│ RISKS:                                     │
+│  1. Whipsaw inside the range               │
+│  2. Low-liquidity fake break               │
+│   3. Macro headline risk that rewrites the │
+│   tape                                     │
+│                                            │
+│ INVALIDATION:                              │
+│   Two closes outside $194.96-$207.02 (demo │
+│   band)                                    │
+├────────────────────────────────────────────┤
+│   Demo research data only. Offline /       │
+│   deterministic. Not live market data. Not │
+│   financial advice.                        │
+└────────────────────────────────────────────┘
 
 _tools used: research_

@@ -146,13 +146,32 @@ def test_known_ticker_meta_is_intentional() -> None:
     assert brief.company == "Apple"
     assert brief.sector == "Technology"
     msg = brief.format_message()
-    assert "TAPE" in msg or "tape" in msg.lower()
+    # Terminal card: box drawing, no markdown asterisks
+    assert "┌" in msg and "└" in msg
+    assert "**" not in msg
+    assert "TAPE" in msg
     assert brief.sparkline
-    assert "Snapshot" in msg
-    assert "Invalidation" in msg
+    assert "THESIS" in msg
+    assert "INVALIDATION" in msg
     levels = run_turn("levels on NVDA")
     assert "NVIDIA" in levels.text
-    assert "Ladder" in levels.text or "LAST" in levels.text
+    assert "LADDER" in levels.text or "LAST" in levels.text
+
+
+def test_research_embed_payload_for_discord() -> None:
+    """Discord path needs Embed dicts, not raw markdown walls."""
+    result = run_turn("research AAPL")
+    assert result.embeds
+    emb = result.embeds[0]
+    assert emb["title"].startswith("AAPL")
+    assert "fields" in emb and len(emb["fields"]) >= 4
+    names = {f["name"] for f in emb["fields"]}
+    assert "Thesis" in names
+    assert "Bias" in names
+    # Color keyed by bias
+    brief = research_brief("AAPL")
+    assert emb["color"] in {0x57F287, 0xED4245, 0xFEE75C, 0x99AAB5}
+    assert brief.bias in {"bullish", "bearish", "neutral"}
 
 
 def test_readme_points_at_showcase_assets() -> None:

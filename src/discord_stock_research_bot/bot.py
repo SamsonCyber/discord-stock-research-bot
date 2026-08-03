@@ -61,10 +61,23 @@ async def on_message(message: discord.Message) -> None:
     async with message.channel.typing():
         result = run_turn(content)
 
-    # Discord hard limit 2000 chars; keep research replies readable.
+    # Prefer rich Embeds when the agent produced them (research / levels / risk).
+    # Plain markdown walls look broken in Discord; embeds are the product surface.
+    if result.embeds:
+        embeds: list[discord.Embed] = []
+        for payload in result.embeds[:10]:
+            emb = discord.Embed.from_dict(payload)
+            embeds.append(emb)
+        # Optional short footer note under embeds (tools used).
+        names = ", ".join(c["name"] for c in result.tool_calls) if result.tool_calls else ""
+        content_note = f"_tools used: {names}_" if names else None
+        await message.channel.send(content=content_note, embeds=embeds)
+        return
+
+    # Fallback: plain text (help / errors). Discord hard limit 2000 chars.
     text = result.text
     if len(text) > 1900:
-        text = text[:1900] + "\n…(truncated)"
+        text = text[:1900] + "\n...(truncated)"
     await message.channel.send(text)
 
 
