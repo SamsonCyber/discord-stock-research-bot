@@ -225,7 +225,7 @@ def run_turn(user_text: str) -> AgentTurnResult:
             parts.append(card.format_message())
             embeds.append(card.as_embed_dict())
 
-    # CLI gets boxed plain text; Discord prefers embeds (bot sends those).
+    # CLI + Discord default: production-shaped markdown text (bot can opt into embeds).
     body = "\n\n".join(parts) + _format_tool_footer(calls)
     return AgentTurnResult(
         text=body,

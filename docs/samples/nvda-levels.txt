@@ -1,24 +1,18 @@
-┌────────────────────────────────────────────┐
-│ NVDA  ·  LEVELS                            │
-│ NVIDIA  ·  offline-demo                    │
-├────────────────────────────────────────────┤
-│  LAST       $128.43                        │
-│  PIVOT      $128.43                        │
-│  NEAREST R  $132.98  (+3.5%)               │
-│  NEAREST S  $123.89  (-3.5%)               │
-├────────────────────────────────────────────┤
-│ LADDER:                                    │
-│  ··········▲ $  142.08  R1 +10.6%          │
-│  ········▲·· $  137.53  R2 +7.1%           │
-│  ·······▲··· $  132.98  R3 +3.5%           │
-│  ·····●····· $  128.43  << LAST            │
-│  ···▼······· $  123.89  S1 -3.5%           │
-│  ··▼········ $  119.34  S2 -7.1%           │
-│  ▼·········· $  114.79  S3 -10.6%          │
-├────────────────────────────────────────────┤
-│   Demo research data only. Offline /       │
-│   deterministic. Not live market data. Not │
-│   financial advice.                        │
-└────────────────────────────────────────────┘
+**NVDA · levels**
+`as_of offline-demo` · NVIDIA · paper research only
+
+**Take** · INFERRED
+Price sits near **$128.43** with pivot **$128.43**. Nearest resistance **$132.98** (+3.5%); nearest support **$123.89** (-3.5%).
+
+**Levels that matter** · VERIFIED (demo)
+Support: $123.89, $119.34, $114.79
+Resistance: $132.98, $137.53, $142.08
+Pivot: **$128.43**
+
+**What I'm watching**
+• Clean hold above **$123.89** with volume
+• Break / reclaim of **$132.98**
+
+_Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
 
 _tools used: levels_
