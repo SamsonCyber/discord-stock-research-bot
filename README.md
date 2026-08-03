@@ -73,6 +73,10 @@ python -m discord_stock_research_bot.demo research AAPL --json
 
 ## Tools the agent can run
 
+### Public package (this repo)
+
+Offline demo tools so you can clone without brokerage or market-data keys:
+
 | Tool | What it returns |
 |---|---|
 | `research` | Bias, conviction, thesis, catalysts, risks, invalidation |
@@ -81,6 +85,183 @@ python -m discord_stock_research_bot.demo research AAPL --json
 | `list_tools` | Tool catalog (also used by `help`) |
 
 Every public-package tool response is labeled **offline-demo**: deterministic per ticker, not live quotes. Swap `research.py` / tool handlers for live data and models in production; keep the NL Discord gateway.
+
+### Production Finbot research tools (live Discord agent)
+
+The production agent (private deploy) uses an LLM tool loop over a larger research surface. Owner-visible catalog (from `ToolRegistry` + `tool_catalog`):
+
+
+Total registered tools (owner view): **72**.
+
+Friends see a subset (no owner-only Pine compile / some hygiene). Call list_tools at runtime for the live graph.
+
+### Price and session
+
+| Tool | What it does |
+|---|---|
+| chase_guard | Extension and chase flags from recent move + RSI-style stress. |
+| get_ohlcv | OHLCV snapshot (price, volume, window high/low). |
+| project_price | Monte Carlo price projection (research, not a promise). |
+
+### Technicals
+
+| Tool | What it does |
+|---|---|
+| explain_ta | Short TA bullets grounded in OHLCV + technicals. |
+| get_technicals | Technicals + Raven model scalars (no full series dumps). |
+
+### Fundamentals
+
+| Tool | What it does |
+|---|---|
+| get_analyst_ratings | Analyst consensus and price targets. |
+| get_customer_concentration | Scan latest 10-K (else 10-Q) for customer concentration % language. |
+| get_fundamentals | Fundamentals pack: revenue, gross profit, margins, FCF, leverage, YoY growth, dual-layer balance sheet (technical + plain). |
+| get_value_factor | Value-factor scores for the ticker. |
+
+### Flow, short interest, options, GEX
+
+| Tool | What it does |
+|---|---|
+| get_congressional_trades | Congressional trades linked to ticker. |
+| get_gex_profile | Dealer gamma / GEX estimate. |
+| get_insider_trades | Recent insider (Form 4 style) trades. |
+| get_options_summary | Options summary and put-call bias. |
+| get_short_interest | Short % float and days-to-cover style fields (PROBABLE). |
+
+### Research packs
+
+| Tool | What it does |
+|---|---|
+| deep_research | Planned multi-phase pack for ONE ticker. |
+| dossier_deep | Deep multi-source dossier (heavier than quick). |
+| dossier_quick | Quick multi-source pack + SI + fundamentals ratios + dual balance sheet + customer concentration + quant_line (SI/GEX/chase when present). |
+| get_full_dossier | Legacy raw multi-source pack. |
+
+### SEC / EDGAR
+
+| Tool | What it does |
+|---|---|
+| audit_claim | Phrase-match a claim against filing body. |
+| get_sec_filing_body | Fetch EDGAR body text (sec.gov URL or latest form for ticker). |
+| get_sec_filings | Recent EDGAR filings list for ticker. |
+| macro_sec_pack | Aggregate EDGAR 10-K/10-Q/8-K for rate-sensitive issuers (banks, mREITs, consumer finance, homebuilders) + interest-rate risk snippets. |
+
+### News
+
+| Tool | What it does |
+|---|---|
+| catalyst_pack | Catalyst pack (news / SEC / X signals when available). |
+| get_news | Recent headlines for ticker (PROBABLE). |
+| web_news_search | Google News RSS search (keyless). |
+
+### Web fetch and search
+
+| Tool | What it does |
+|---|---|
+| web_fetch | Fetch allowlisted HTTPS page text (egress-gated). |
+| web_search | Web/news search by free-text query. |
+| web_search_ticker | News search scoped to ticker + optional angle. |
+
+### X / social (read-only)
+
+| Tool | What it does |
+|---|---|
+| x_search | X/Twitter search (read-only SuperGrok path). |
+| x_search_ticker | X cashtag search for ticker. |
+| x_user_lookup | Public X profile lookup. |
+
+### Charts and levels
+
+| Tool | What it does |
+|---|---|
+| chart | One chart tool: TV||matplotlib race, first PNG attaches. |
+| chart_quick | Deprecated local-only alias. |
+| chart_tv | Same as chart: TV||matplotlib race, first PNG wins. |
+| compare_tickers | Side-by-side snapshot for 2-6 tickers (price, day%, range, RSI if cheap). |
+| get_chart_history | Recent charts this user pulled (ticker@TF). |
+| tv_levels | Key levels from OHLCV (S/R style). |
+
+### Macro and rates
+
+| Tool | What it does |
+|---|---|
+| get_macro_context | Macro indices / VIX context pack. |
+| index_snapshot | SPY QQQ IWM DIA VIX snapshot. |
+| market_session | US session phase (ET). |
+
+### Scanner
+
+| Tool | What it does |
+|---|---|
+| run_scan | TradingView screener preset (volume_surge, oversold, sc_breakout, ...). |
+
+### Thesis memory (per user)
+
+| Tool | What it does |
+|---|---|
+| add_thesis_note | Lazy scrapbook note (you distill). |
+| compile_thesis_report | Card + notes + chat hits pack + local markdown export_path + paper research stub. |
+| delete_thesis | Delete thesis card for a ticker. |
+| delete_thesis_note | Delete one scrapbook note by id. |
+| get_thesis | Load saved thesis card (stance, levels, invalidation). |
+| list_theses | List this user's thesis card summaries. |
+| list_thesis_notes | List recent scrapbook notes for ticker (or all). |
+| list_thesis_outcomes | List this user's thesis outcomes (optional ticker filter). |
+| record_thesis_outcome | Record hit|miss|partial + reason for this user. |
+| save_thesis | Save/update thesis card (merge by default). |
+
+### Shared agent thesis board
+
+| Tool | What it does |
+|---|---|
+| board_add | Add novel thesis to shared board (deduped). |
+| board_addon | Append bear|support|update|note onto board thesis id. |
+| board_get | Full board thesis by id including add_ons. |
+| board_list | Shared agent-board theses for ticker (cross-session memory). |
+| board_stale | List or mark stale board theses. |
+
+### User prefs and session memory
+
+| Tool | What it does |
+|---|---|
+| get_user_prefs | Load this user's format/persona/chart prefs + pine names. |
+| session_return_brief | Since-last-talk pack: watchlist/thesis moves, macro, last charts. |
+| set_user_pref | Save one preference (output_format, persona, chart_timeframe, ...). |
+
+### Pine scripts (mostly owner)
+
+| Tool | What it does |
+|---|---|
+| delete_pine_script | Delete named Pine for this user only. |
+| get_pine_script | Load agent-authored Pine for a saved name (data plane). |
+| list_pine_scripts | List this user's saved Pine names (no source). |
+| pine_compile | Compile Pine (static + optional TV bridge). |
+| pine_explain | Outline Pine source (inputs/functions) without compiling. |
+| pine_get_errors | Last pine_compile result for this owner. |
+| pine_validate_snippet | Static Pine checks (version, decls, v6 footguns). |
+| save_pine_script | Save Pine YOU authored from their words. |
+
+### Meta / routing
+
+| Tool | What it does |
+|---|---|
+| extract_tickers | Extract US equity tickers from free text. |
+| glossary | Local glossary definition for a term. |
+| list_tools | Return tool graph: families, paths, short when/next for each tool. |
+| resolve_company | Map company name to liquid US ticker. |
+
+### Other
+
+| Tool | What it does |
+|---|---|
+| get_fed_odds | Live FOMC / fed funds target-range probabilities (public CME FedWatch-style source). |
+
+SEC rows in production are always shown as brief markdown EDGAR links when a URL is present, for example:
+
+```text
+[8-K 2026-06-26 — Closing 8-K (debt/notes related)](https://www.sec.gov/...) [PROBABLE]
+```
 
 ---
 
