@@ -1,17 +1,17 @@
-**NVDA · levels**
-`as_of offline-demo` · NVIDIA · paper research only
+**NVDA | levels**
+`as_of offline-demo` | NVIDIA | paper research only
 
-**Take** · INFERRED
+**Take** | INFERRED
 Price sits near **$128.43** with pivot **$128.43**. Nearest resistance **$132.98** (+3.5%); nearest support **$123.89** (-3.5%).
 
-**Levels that matter** · VERIFIED (demo)
+**Levels that matter** | VERIFIED (demo)
 Support: $123.89, $119.34, $114.79
 Resistance: $132.98, $137.53, $142.08
 Pivot: **$128.43**
 
 **What I'm watching**
-• Clean hold above **$123.89** with volume
-• Break / reclaim of **$132.98**
+- Clean hold above **$123.89** with volume
+- Break / reclaim of **$132.98**
 
 _Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
 
