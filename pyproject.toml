@@ -12,7 +12,7 @@ license = { text = "MIT" }
 dependencies = ["numpy>=1.24", "discord.py>=2.3"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.9"]
+dev = ["pytest>=8.0", "ruff>=0.9", "PyYAML>=6.0"]
 
 [project.scripts]
 equity-research-agent = "equity_research_agent.bot:main"
