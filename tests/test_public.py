@@ -109,7 +109,7 @@ def test_showcase_assets_exist() -> None:
     root = Path(__file__).resolve().parents[1]
     for rel in (
         "assets/architecture.svg",
-        "assets/banner.svg",
+        "assets/banner.png",
         "assets/interactive-demo.html",
         "docs/samples/aapl-research.txt",
     ):
@@ -194,7 +194,7 @@ def test_agent_text_is_production_shaped_markdown() -> None:
 def test_readme_points_at_showcase_assets() -> None:
     root = Path(__file__).resolve().parents[1]
     readme = (root / "README.md").read_text(encoding="utf-8")
-    assert "assets/banner.svg" in readme
+    assert "assets/banner.png" in readme
     assert "assets/interactive-demo.html" in readme
     assert "assets/architecture.svg" in readme
     assert "docs/samples/aapl-research.txt" in readme
