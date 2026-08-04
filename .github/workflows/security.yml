@@ -1,0 +1,108 @@
+# SAST / SCA / DAST — separate from unit CI so scanner noise never hides pytest.
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  sast:
+    name: SAST (Bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install Bandit
+        run: python -m pip install --upgrade pip bandit
+      - name: Run Bandit on application source
+        run: |
+          mkdir -p reports
+          # Text for the job log; JSON for the artifact. -ll = medium+ fails the job.
+          bandit -r src/ -ll -f txt | tee reports/bandit.txt
+          bandit -r src/ -ll -f json -o reports/bandit.json
+      - name: Upload SAST report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-bandit
+          path: reports/bandit.*
+          if-no-files-found: error
+
+  sca:
+    name: SCA (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install project and pip-audit
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install -e ".[dev]" pip-audit
+      - name: Audit resolved dependencies
+        run: |
+          mkdir -p reports
+          # Default severity policy: any known vulnerability fails the job.
+          # Editable project name is not on PyPI; skip that one package only.
+          pip-audit --skip-editable --format json --output reports/pip-audit.json
+          pip-audit --skip-editable --format columns | tee reports/pip-audit.txt
+      - name: Upload SCA report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sca-pip-audit
+          path: reports/pip-audit.*
+          if-no-files-found: error
+
+  dast:
+    name: DAST (OWASP ZAP baseline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require serveable HTTP target
+        run: |
+          test -f assets/interactive-demo.html
+          test -s assets/interactive-demo.html
+      - name: Serve interactive demo on localhost
+        run: |
+          python3 -m http.server 8765 --directory assets \
+            > "${{ runner.temp }}/demo-server.log" 2>&1 &
+          echo $! > "${{ runner.temp }}/demo-server.pid"
+          for i in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:8765/interactive-demo.html" \
+              -o "${{ runner.temp }}/demo-probe.html"; then
+              echo "demo server ready"
+              wc -c "${{ runner.temp }}/demo-probe.html"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "demo server failed to start" >&2
+          cat "${{ runner.temp }}/demo-server.log" >&2 || true
+          exit 1
+      - name: OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: "http://127.0.0.1:8765"
+          allow_issue_writing: false
+          # Job fails if ZAP cannot start. Static demo WARN noise does not fail the build
+          # (triage is out of scope for wiring scanners). Artifact still uploads.
+          fail_action: false
+          artifact_name: dast-zap-report
+      - name: Upload demo server log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dast-demo-server-log
+          path: ${{ runner.temp }}/demo-server.log
+          if-no-files-found: warn
