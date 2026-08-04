@@ -1,10 +1,10 @@
-**TSLA · risk**
-`as_of offline-demo` · Tesla · paper research only
+**TSLA | risk**
+`as_of offline-demo` | Tesla | paper research only
 
-**Read** · INFERRED
+**Read** | INFERRED
 Last **$250.37**. ATR **3.63%** (hot), beta **1.34**. Demo stop **$236.74** (~5.4% risk/share); 1R target **$263.99**.
 
-**Sizing note** · PROBABLE
+**Sizing note** | PROBABLE
 Demo sizing: risk a fixed fraction of capital against the stop distance. Do not size from conviction alone.
 
 _Demo research data only. Offline / deterministic. Not live market data. Not financial advice._

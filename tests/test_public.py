@@ -1,4 +1,4 @@
-"""Public package tests — no network, no Discord token required."""
+"""Public package tests - no network, no Discord token required."""
 
 from __future__ import annotations
 
@@ -119,6 +119,12 @@ def test_showcase_assets_exist() -> None:
     hero = (root / "assets" / "hero-discord.svg").read_text(encoding="utf-8")
     assert "<svg" in hero
     assert "research AAPL" in hero
+    # GitHub strips foreignObject - body must be pure SVG text from the engine
+    assert "foreignObject" not in hero
+    assert "AAPL | research" in hero or "AAPL &#183; research" in hero or "AAPL" in hero
+    assert "offline-demo" in hero
+    assert "tools used" in hero.lower()
+    assert "range-bound" in hero  # live engine phrase, not empty chrome
     demo = (root / "assets" / "interactive-demo.html").read_text(encoding="utf-8")
     assert "const DATA" in demo
     assert "AAPL" in demo
@@ -148,9 +154,9 @@ def test_known_ticker_meta_is_intentional() -> None:
     msg = brief.format_message()
     # Production-shaped Discord markdown (not ASCII box cards)
     assert "┌" not in msg and "└" not in msg
-    assert "**AAPL · research**" in msg
+    assert "**AAPL | research**" in msg
     assert "**Read**" in msg
-    assert "**1 · Tape**" in msg
+    assert "**1 | Tape**" in msg
     assert "INFERRED" in msg
     assert "VERIFIED" in msg
     assert "█" not in msg and "░" not in msg
@@ -159,7 +165,7 @@ def test_known_ticker_meta_is_intentional() -> None:
     assert "conviction **med**" in msg or "conviction **low**" in msg or "conviction **high**" in msg
     levels = run_turn("levels on NVDA")
     assert "NVIDIA" in levels.text
-    assert "**NVDA · levels**" in levels.text
+    assert "**NVDA | levels**" in levels.text
     assert "Support:" in levels.text or "support" in levels.text.lower()
 
 
@@ -170,7 +176,7 @@ def test_research_embed_payload_for_discord() -> None:
     emb = result.embeds[0]
     assert emb["title"].startswith("AAPL")
     assert "description" in emb
-    assert "**AAPL · research**" in emb["description"]
+    assert "**AAPL | research**" in emb["description"]
     brief = research_brief("AAPL")
     assert emb["color"] in {0x57F287, 0xED4245, 0xFEE75C, 0x99AAB5}
     assert brief.bias in {"bullish", "bearish", "neutral"}
@@ -182,9 +188,9 @@ def test_agent_text_is_production_shaped_markdown() -> None:
     assert "┌" not in text
     assert "█" not in text and "░" not in text
     assert "▁" not in text and "▇" not in text
-    assert "**AAPL · research**" in text
+    assert "**AAPL | research**" in text
     assert "paper research only" in text
-    assert "**3 · Catalysts**" in text
+    assert "**3 | Catalysts**" in text
     assert "_tools used: research_" in text
 
 

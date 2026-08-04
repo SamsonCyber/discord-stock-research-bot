@@ -116,10 +116,10 @@ def _lean_tag(bias: str) -> str:
 def _vol_note(volume_vs_avg: float) -> str:
     vr = float(volume_vs_avg)
     if vr >= 1.5:
-        return f" · heavy volume (~{vr:.1f}x avg)"
+        return f" | heavy volume (~{vr:.1f}x avg)"
     if vr <= 0.7:
-        return f" · light volume (~{vr:.1f}x avg)"
-    return f" · volume ~{vr:.1f}x avg"
+        return f" | light volume (~{vr:.1f}x avg)"
+    return f" | volume ~{vr:.1f}x avg"
 
 
 @dataclass(frozen=True)
@@ -145,32 +145,32 @@ class ResearchBrief:
     def format_message(self) -> str:
         """Discord markdown research reply (production agent shape).
 
-        Summary-first sections + epistemic tags. Plain words only — no bars
+        Summary-first sections + epistemic tags. Plain words only - no bars
         or sparkline cosplay.
         """
         chg_s = f"{self.change_pct:+.2f}%"
         conv = _conviction_word(self.conviction)
         lines: list[str] = [
-            f"**{self.ticker} · research**",
-            f"`as_of {self.mode}` · {self.company} · {self.sector} · paper research only",
+            f"**{self.ticker} | research**",
+            f"`as_of {self.mode}` | {self.company} | {self.sector} | paper research only",
             "",
-            "**Read** · INFERRED",
+            "**Read** | INFERRED",
             self.thesis,
             "",
-            "**1 · Tape** · VERIFIED (demo OHLCV)",
+            "**1 | Tape** | VERIFIED (demo OHLCV)",
             f"Last **${self.last_price:.2f}** ({chg_s}){_vol_note(self.volume_vs_avg)}",
             "",
-            "**2 · Lean** · INFERRED",
-            f"**{_lean_tag(self.bias)}** · conviction **{conv}**",
+            "**2 | Lean** | INFERRED",
+            f"**{_lean_tag(self.bias)}** | conviction **{conv}**",
             "",
-            "**3 · Catalysts** · PROBABLE",
+            "**3 | Catalysts** | PROBABLE",
         ]
         for c in self.catalysts:
-            lines.append(f"• {c}")
+            lines.append(f"- {c}")
         lines.append("")
-        lines.append("**4 · Risks** · PROBABLE")
+        lines.append("**4 | Risks** | PROBABLE")
         for r in self.risks:
-            lines.append(f"• {r}")
+            lines.append(f"- {r}")
         lines.append("")
         lines.append("**Invalidation**")
         lines.append(self.invalidation)
@@ -183,7 +183,7 @@ class ResearchBrief:
         body = self.format_message()
         # Discord embed description hard limit ~4096
         return {
-            "title": f"{self.ticker}  ·  {self.company}",
+            "title": f"{self.ticker}  |  {self.company}",
             "description": body[:4000],
             "color": _BIAS_COLOR.get(self.bias, 0x99AAB5),
             "footer": {"text": self.disclaimer[:2048]},
@@ -213,24 +213,24 @@ class LevelMap:
         s_str = ", ".join(f"${s:.2f}" for s in sorted(self.supports, reverse=True))
         r_str = ", ".join(f"${r:.2f}" for r in sorted(self.resistances))
         lines = [
-            f"**{self.ticker} · levels**",
-            f"`as_of {self.mode}` · {self.company} · paper research only",
+            f"**{self.ticker} | levels**",
+            f"`as_of {self.mode}` | {self.company} | paper research only",
             "",
-            "**Take** · INFERRED",
+            "**Take** | INFERRED",
             (
                 f"Price sits near **${self.last_price:.2f}** with pivot **${self.pivot:.2f}**. "
                 f"Nearest resistance **${nearest_r:.2f}** (+{room_up:.1f}%); "
                 f"nearest support **${nearest_s:.2f}** (-{room_dn:.1f}%)."
             ),
             "",
-            "**Levels that matter** · VERIFIED (demo)",
+            "**Levels that matter** | VERIFIED (demo)",
             f"Support: {s_str}",
             f"Resistance: {r_str}",
             f"Pivot: **${self.pivot:.2f}**",
             "",
             "**What I'm watching**",
-            f"• Clean hold above **${nearest_s:.2f}** with volume",
-            f"• Break / reclaim of **${nearest_r:.2f}**",
+            f"- Clean hold above **${nearest_s:.2f}** with volume",
+            f"- Break / reclaim of **${nearest_r:.2f}**",
             "",
             f"_{self.disclaimer}_",
         ]
@@ -239,7 +239,7 @@ class LevelMap:
     def as_embed_dict(self) -> dict:
         body = self.format_message()
         return {
-            "title": f"{self.ticker}  ·  Levels",
+            "title": f"{self.ticker}  |  Levels",
             "description": body[:4000],
             "color": _LEVEL_COLOR,
             "footer": {"text": self.disclaimer[:2048]},
@@ -273,17 +273,17 @@ class RiskSnapshot:
             heat = "normal"
         risk_pct = self.risk_per_share / self.last_price * 100.0 if self.last_price else 0.0
         lines = [
-            f"**{self.ticker} · risk**",
-            f"`as_of {self.mode}` · {self.company} · paper research only",
+            f"**{self.ticker} | risk**",
+            f"`as_of {self.mode}` | {self.company} | paper research only",
             "",
-            "**Read** · INFERRED",
+            "**Read** | INFERRED",
             (
                 f"Last **${self.last_price:.2f}**. ATR **{self.atr_pct:.2f}%** ({heat}), "
                 f"beta **{self.beta:.2f}**. Demo stop **${self.suggested_stop:.2f}** "
                 f"(~{risk_pct:.1f}% risk/share); 1R target **${self.r_multiple_1r:.2f}**."
             ),
             "",
-            "**Sizing note** · PROBABLE",
+            "**Sizing note** | PROBABLE",
             self.position_note,
             "",
             f"_{self.disclaimer}_",
@@ -293,7 +293,7 @@ class RiskSnapshot:
     def as_embed_dict(self) -> dict:
         body = self.format_message()
         return {
-            "title": f"{self.ticker}  ·  Risk",
+            "title": f"{self.ticker}  |  Risk",
             "description": body[:4000],
             "color": _RISK_COLOR,
             "footer": {"text": self.disclaimer[:2048]},
@@ -435,13 +435,13 @@ def risk_snapshot(ticker: str) -> RiskSnapshot:
     )
 
 
-TOOL_HELP = """**Equity Research Agent — tools**
+TOOL_HELP = """**Equity Research Agent - tools**
 
 Talk in natural language (preferred):
-• `research AAPL`
-• `levels on NVDA`
-• `risk for TSLA`
-• `help`
+- `research AAPL`
+- `levels on NVDA`
+- `risk for TSLA`
+- `help`
 
 This public package uses an **offline demo research engine** (deterministic per ticker).
 Wire your own market-data and model backends for production research.

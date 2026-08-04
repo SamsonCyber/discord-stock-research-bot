@@ -2,8 +2,9 @@
   <img src="assets/banner.svg" alt="Equity Research Agent banner" width="100%"/>
 </p>
 
+
 <p align="center">
-  <strong>Equity Research Agent</strong> — natural-language equity research.<br/>
+  <strong>Equity Research Agent</strong> - natural-language equity research.<br/>
   You talk. The agent runs tools. A structured brief lands (thesis, levels, risk).<br/>
   <em>Discord DM adapter included. Not a slash-command toy. Not brokerage glue.</em>
 </p>
@@ -17,9 +18,9 @@
 </p>
 
 <p align="center">
-  <a href="#try-it-in-10-seconds"><strong>Try offline</strong></a> ·
-  <a href="assets/interactive-demo.html"><strong>Interactive demo</strong></a> ·
-  <a href="#discord-setup">Discord setup</a> ·
+  <a href="#try-it-in-10-seconds"><strong>Try offline</strong></a> |
+  <a href="assets/interactive-demo.html"><strong>Interactive demo</strong></a> |
+  <a href="#discord-setup">Discord setup</a> |
   <a href="docs/PRODUCTION_TOOLS.md">Production tool catalog</a>
 </p>
 
@@ -39,7 +40,7 @@ python -m equity_research_agent.demo research AAPL
 
 | You say | What happens |
 |---|---|
-| `research AAPL` | Thesis · bias · conviction · catalysts · risks · invalidation |
+| `research AAPL` | Thesis, bias, conviction, catalysts, risks, invalidation |
 | `levels on NVDA` | Support / resistance ladder around a shared ref price |
 | `risk for TSLA` | ATR%, beta, demo stop, risk/share, 1R target |
 | `help` | Tool catalog |
@@ -77,7 +78,7 @@ Open the in-repo UI (self-contained HTML, engine payloads baked in):
 
 **[assets/interactive-demo.html](assets/interactive-demo.html)**
 
-Pick AAPL / NVDA / TSLA / MSFT / AMD and flip research · levels · risk. Same deterministic engine as the CLI.
+Pick AAPL / NVDA / TSLA / MSFT / AMD and flip research | levels | risk. Same deterministic engine as the CLI.
 
 ---
 
@@ -86,27 +87,27 @@ Pick AAPL / NVDA / TSLA / MSFT / AMD and flip research · levels · risk. Same d
 Exact `run_turn("research AAPL")` output. Full file: [`docs/samples/aapl-research.txt`](docs/samples/aapl-research.txt).
 
 ~~~~text
-**AAPL · research**
-`as_of offline-demo` · Apple · Technology · paper research only
+**AAPL | research**
+`as_of offline-demo` | Apple | Technology | paper research only
 
-**Read** · INFERRED
+**Read** | INFERRED
 Apple (AAPL) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.
 
-**1 · Tape** · VERIFIED (demo OHLCV)
-Last **$200.99** (-1.75%) · heavy volume (~1.8x avg)
+**1 | Tape** | VERIFIED (demo OHLCV)
+Last **$200.99** (-1.75%) | heavy volume (~1.8x avg)
 
-**2 · Lean** · INFERRED
-**neutral / range (INFERRED)** · conviction **med**
+**2 | Lean** | INFERRED
+**neutral / range (INFERRED)** | conviction **med**
 
-**3 · Catalysts** · PROBABLE
-• Range break with expanding volume
-• Catalyst calendar (earnings / product / event)
-• Technology leadership change that pulls the name
+**3 | Catalysts** | PROBABLE
+- Range break with expanding volume
+- Catalyst calendar (earnings / product / event)
+- Technology leadership change that pulls the name
 
-**4 · Risks** · PROBABLE
-• Whipsaw inside the range
-• Low-liquidity fake break
-• Macro headline risk that rewrites the tape
+**4 | Risks** | PROBABLE
+- Whipsaw inside the range
+- Low-liquidity fake break
+- Macro headline risk that rewrites the tape
 
 **Invalidation**
 Two closes outside $194.96-$207.02 (demo band)
@@ -131,14 +132,14 @@ python scripts/build_showcase.py
 </p>
 
 ```text
-  natural language  →  allowlist gate  →  intent classify  →  tools  →  research reply
+  natural language  ->  allowlist gate  ->  intent classify  ->  tools  ->  research reply
        DM only           fail-closed         research|levels|risk         + tools footer
 ```
 
 | Module | Role |
 |---|---|
 | [`bot.py`](src/equity_research_agent/bot.py) | Discord DM gateway |
-| [`agent.py`](src/equity_research_agent/agent.py) | NL turn: intent → tools → reply |
+| [`agent.py`](src/equity_research_agent/agent.py) | NL turn: intent -> tools -> reply |
 | [`tools.py`](src/equity_research_agent/tools.py) | Tool registry |
 | [`research.py`](src/equity_research_agent/research.py) | Offline deterministic engine |
 | [`auth.py`](src/equity_research_agent/auth.py) | Fail-closed allowlist |
@@ -150,18 +151,18 @@ python scripts/build_showcase.py
 
 | Tool | Card you get |
 |---|---|
-| `research` | Company · sector · bias · conviction · price · thesis · catalysts · risks · invalidation |
-| `levels` | Shared ref price · pivot · ASCII support/resistance ladder |
-| `risk` | ATR heat · beta · demo stop · risk/share · 1R target |
+| `research` | Company, sector, bias, conviction, price, thesis, catalysts, risks, invalidation |
+| `levels` | Shared ref price, pivot, support/resistance ladder |
+| `risk` | ATR heat, beta, demo stop, risk/share, 1R target |
 | `list_tools` | Catalog (`help`) |
 
 Every card is tagged **`offline-demo`**: deterministic per ticker, not live market data.
 
-Famous symbols (AAPL, NVDA, TSLA, …) resolve to real sectors and company names so demos look intentional. Prices stay synthetic.
+Famous symbols (AAPL, NVDA, TSLA, ...) resolve to real sectors and company names so demos look intentional. Prices stay synthetic.
 
 ### Private production surface
 
-A private deploy can keep this UX and grow into a large research tool graph (charts, fundamentals, SEC/EDGAR, thesis memory, macro packs, …).
+A private deploy can keep this UX and grow into a large research tool graph (charts, fundamentals, SEC/EDGAR, thesis memory, macro packs, ...).
 
 That inventory is **documented, not shipped live here**:
 
@@ -171,9 +172,9 @@ That inventory is **documented, not shipped live here**:
 
 ## Discord setup
 
-1. [Discord Developer Portal](https://discord.com/developers/applications) → bot  
-2. Enable **Message Content Intent**  
-3. Allowlist your Discord user ID  
+1. [Discord Developer Portal](https://discord.com/developers/applications) -> bot
+2. Enable **Message Content Intent**
+3. Allowlist your Discord user ID
 4. DM the bot (guild messages ignored on purpose)
 
 ```bash
@@ -189,7 +190,7 @@ python -m equity_research_agent.bot
 | `STOCK_RESEARCH_ALLOWED_USER_IDS` | yes | Comma-separated user IDs |
 | `STOCK_RESEARCH_ALLOWED_USER_IDS_FILE` | no | File of IDs |
 
-Empty allowlist → **process refuses to start**.
+Empty allowlist -> **process refuses to start**.
 
 ```bash
 python scripts/live_smoke.py   # connect check; never prints the token
@@ -202,7 +203,7 @@ python scripts/live_smoke.py   # connect check; never prints the token
 | Typical Discord bot | This |
 |---|---|
 | `/price AAPL` | `what do you think about AAPL?` |
-| Fixed command surface | Intent → tool registry |
+| Fixed command surface | Intent -> tool registry |
 | Guild channel noise | **DM-only** research path |
 | Open to everyone | **Fail-closed allowlist** |
 | Live quote cosplay without auth | Honest **offline-demo** labels |
@@ -211,23 +212,6 @@ Same product shape as a serious research agent: **you talk, tools run, research 
 
 ---
 
-## Security
-
-- DM-only research path  
-- Fail-closed allowlist on every turn  
-- No brokerage / order router / wallet code  
-- No secrets in git  
-
-[SECURITY.md](SECURITY.md) · [docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md)
-
----
-
-## Status
-
-Package **0.4.0** · [STATUS.md](STATUS.md) · [CHANGELOG.md](CHANGELOG.md)
-
 ## License
 
-MIT · [LICENSE](LICENSE)
-
-**Not financial advice.** Demo data is not live market data. You own your risk.
+MIT. See [LICENSE](LICENSE).

@@ -28,10 +28,40 @@ def main() -> None:
 
     aapl = run_turn("research AAPL").text
     brief = research_brief("AAPL")
-    body_html = "<br/>".join(html.escape(line) if line else "&nbsp;" for line in aapl.splitlines())
+    # GitHub (and most SVG sanitizers) strip foreignObject / XHTML. Render
+    # engine output as pure <text> so the DM mock is real, not empty chrome.
+    body_lines = aapl.splitlines()
+    line_h = 15.2
+    body_pad_top = 14
+    body_pad_bot = 18
+    body_h = max(360, int(body_pad_top + len(body_lines) * line_h + body_pad_bot))
+    panel_top = 70
+    panel_h = 48 + 90 + 40 + body_h + 28  # title + user + bot head + body + pad
+    svg_h = panel_top + panel_h + 40
+    body_y0 = panel_top + 48 + 90 + 40  # start of reply card
+    text_nodes: list[str] = []
+    y = body_y0 + body_pad_top + 12
+    for raw in body_lines:
+        # Keep Discord markdown markers visible (matches CLI/sample), escape XML.
+        safe = html.escape(raw) if raw else " "
+        # Section headers / tags get a slight accent; body stays Discord gray.
+        fill = "#e2e8f0"
+        weight = "600" if raw.startswith("**") else "400"
+        if raw.startswith("_") or raw.startswith("`"):
+            fill = "#94a3b8"
+            weight = "400"
+        if "INFERRED" in raw or "VERIFIED" in raw or "PROBABLE" in raw:
+            fill = "#cbd5e1"
+        text_nodes.append(
+            f'<text x="128" y="{y:.1f}" fill="{fill}" '
+            f'font-family="Consolas, ui-monospace, monospace" font-size="12.5" '
+            f'font-weight="{weight}">{safe}</text>'
+        )
+        y += line_h
+    body_svg = "\n    ".join(text_nodes)
 
     svg = f"""<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 720" role="img" aria-label="Discord DM research demo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 {svg_h}" role="img" aria-label="Discord DM research demo: research AAPL structured brief">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#0c0e16"/>
@@ -46,47 +76,43 @@ def main() -> None:
       <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000" flood-opacity="0.45"/>
     </filter>
     <clipPath id="round">
-      <rect x="40" y="70" width="900" height="600" rx="18"/>
+      <rect x="40" y="{panel_top}" width="900" height="{panel_h}" rx="18"/>
     </clipPath>
   </defs>
-  <rect width="980" height="720" fill="url(#bg)"/>
+  <rect width="980" height="{svg_h}" fill="url(#bg)"/>
   <circle cx="120" cy="80" r="160" fill="#5865F2" opacity="0.12"/>
-  <circle cx="860" cy="640" r="200" fill="#00D4FF" opacity="0.08"/>
+  <circle cx="860" cy="{svg_h - 80}" r="200" fill="#00D4FF" opacity="0.08"/>
 
   <text x="48" y="42" fill="#f1f5f9" font-family="Segoe UI, system-ui, sans-serif" font-size="22" font-weight="700">
     Natural language. Tools run. Research lands.
   </text>
   <text x="48" y="62" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="13">
-    Offline demo engine · deterministic · no API keys
+    Offline demo engine | deterministic | no API keys | same path as CLI
   </text>
 
   <g filter="url(#soft)" clip-path="url(#round)">
-    <rect x="40" y="70" width="900" height="600" rx="18" fill="#313338"/>
-    <rect x="40" y="70" width="900" height="48" fill="#2b2d31"/>
-    <circle cx="68" cy="94" r="12" fill="#5865F2"/>
-    <text x="88" y="99" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="15" font-weight="700">Research Bot</text>
-    <text x="200" y="99" fill="#b5bac1" font-family="Segoe UI, system-ui, sans-serif" font-size="12">Direct Message · allowlisted</text>
-    <text x="900" y="99" text-anchor="end" fill="#23a559" font-family="Segoe UI, system-ui, sans-serif" font-size="12">online</text>
+    <rect x="40" y="{panel_top}" width="900" height="{panel_h}" rx="18" fill="#313338"/>
+    <rect x="40" y="{panel_top}" width="900" height="48" fill="#2b2d31"/>
+    <circle cx="68" cy="{panel_top + 24}" r="12" fill="#5865F2"/>
+    <text x="88" y="{panel_top + 29}" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="15" font-weight="700">Research Bot</text>
+    <text x="200" y="{panel_top + 29}" fill="#b5bac1" font-family="Segoe UI, system-ui, sans-serif" font-size="12">Direct Message | allowlisted</text>
+    <text x="900" y="{panel_top + 29}" text-anchor="end" fill="#23a559" font-family="Segoe UI, system-ui, sans-serif" font-size="12">online</text>
 
-    <circle cx="78" cy="160" r="18" fill="#ed4245"/>
-    <text x="78" y="165" text-anchor="middle" fill="#fff" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="700">U</text>
-    <text x="110" y="152" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">you</text>
-    <text x="150" y="152" fill="#949ba4" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Today at 9:41 AM</text>
-    <text x="110" y="176" fill="#dbdee1" font-family="Segoe UI, system-ui, sans-serif" font-size="15">research AAPL</text>
+    <circle cx="78" cy="{panel_top + 90}" r="18" fill="#ed4245"/>
+    <text x="78" y="{panel_top + 95}" text-anchor="middle" fill="#fff" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="700">U</text>
+    <text x="110" y="{panel_top + 82}" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">you</text>
+    <text x="150" y="{panel_top + 82}" fill="#949ba4" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Today at 9:41 AM</text>
+    <text x="110" y="{panel_top + 106}" fill="#dbdee1" font-family="Segoe UI, system-ui, sans-serif" font-size="15">research AAPL</text>
 
-    <circle cx="78" cy="230" r="18" fill="url(#blurble)"/>
-    <text x="78" y="235" text-anchor="middle" fill="#0b1020" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="800">RB</text>
-    <text x="110" y="222" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">Research Bot</text>
-    <text x="220" y="222" fill="#5865F2" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="700">APP</text>
-    <text x="255" y="222" fill="#949ba4" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Today at 9:41 AM</text>
+    <circle cx="78" cy="{panel_top + 160}" r="18" fill="url(#blurble)"/>
+    <text x="78" y="{panel_top + 165}" text-anchor="middle" fill="#0b1020" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="800">RB</text>
+    <text x="110" y="{panel_top + 152}" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">Research Bot</text>
+    <text x="220" y="{panel_top + 152}" fill="#5865F2" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="700">APP</text>
+    <text x="255" y="{panel_top + 152}" fill="#949ba4" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Today at 9:41 AM</text>
 
-    <rect x="110" y="238" width="780" height="390" rx="8" fill="#2b2d31"/>
-    <rect x="110" y="238" width="6" height="390" rx="3" fill="url(#blurble)"/>
-    <foreignObject x="128" y="250" width="750" height="365">
-      <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Segoe UI,system-ui,sans-serif;font-size:13.5px;line-height:1.45;color:#dbdee1;white-space:pre-wrap;">
-        {body_html}
-      </div>
-    </foreignObject>
+    <rect x="110" y="{body_y0}" width="780" height="{body_h}" rx="8" fill="#2b2d31"/>
+    <rect x="110" y="{body_y0}" width="6" height="{body_h}" rx="3" fill="url(#blurble)"/>
+    {body_svg}
   </g>
 </svg>
 """
@@ -112,9 +138,9 @@ def main() -> None:
   <text x="80" y="270" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="28">Talk like a desk. Tools run. Research lands.</text>
   <rect x="80" y="320" width="420" height="56" rx="14" fill="url(#a)"/>
   <text x="290" y="356" text-anchor="middle" fill="#0b1020" font-family="Consolas, monospace" font-size="20" font-weight="700">research AAPL</text>
-  <text x="80" y="420" fill="#cbd5e1" font-family="Segoe UI, system-ui, sans-serif" font-size="20">Natural language DMs · allowlist · offline demo engine</text>
+  <text x="80" y="420" fill="#cbd5e1" font-family="Segoe UI, system-ui, sans-serif" font-size="20">Natural language DMs | allowlist | offline demo engine</text>
   <text x="80" y="460" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="16">No slash-menu tax. No brokerage. Clone and run in 10 seconds.</text>
-  <text x="80" y="560" fill="#67e8f9" font-family="Consolas, monospace" font-size="18">{brief.ticker} · {brief.sector} · {brief.bias} · conviction {brief.conviction}/5 · ${brief.last_price:.2f}</text>
+  <text x="80" y="560" fill="#67e8f9" font-family="Consolas, monospace" font-size="18">{brief.ticker} | {brief.sector} | {brief.bias} | conviction {brief.conviction}/5 | ${brief.last_price:.2f}</text>
 </svg>
 """
     (ASSETS / "banner.svg").write_text(banner, encoding="utf-8")
@@ -134,7 +160,7 @@ def main() -> None:
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Equity Research Agent — Interactive Demo</title>
+<title>Equity Research Agent - Interactive Demo</title>
 <style>
   :root {{
     --bg: #0b1020;
@@ -214,7 +240,7 @@ def main() -> None:
       <div class="title">
         <div class="dot"></div>
         <strong>Research Bot</strong>
-        <span>Direct Message · allowlisted · offline-demo</span>
+        <span>Direct Message | allowlisted | offline-demo</span>
       </div>
       <div class="chat">
         <div class="msg">
@@ -227,14 +253,14 @@ def main() -> None:
         <div class="msg">
           <div class="av bot">RB</div>
           <div style="flex:1;min-width:0">
-            <div class="meta"><b>Research Bot</b> APP · today</div>
+            <div class="meta"><b>Research Bot</b> APP | today</div>
             <div class="bubble" id="botMsg"></div>
           </div>
         </div>
       </div>
     </div>
     <p class="foot">
-      Demo data is deterministic per ticker — not live markets.
+      Demo data is deterministic per ticker - not live markets.
       Source: <a href="https://github.com/SamsonCyber/equity-research-agent">SamsonCyber/equity-research-agent</a>
     </p>
   </div>

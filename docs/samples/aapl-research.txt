@@ -1,24 +1,24 @@
-**AAPL · research**
-`as_of offline-demo` · Apple · Technology · paper research only
+**AAPL | research**
+`as_of offline-demo` | Apple | Technology | paper research only
 
-**Read** · INFERRED
+**Read** | INFERRED
 Apple (AAPL) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.
 
-**1 · Tape** · VERIFIED (demo OHLCV)
-Last **$200.99** (-1.75%) · heavy volume (~1.8x avg)
+**1 | Tape** | VERIFIED (demo OHLCV)
+Last **$200.99** (-1.75%) | heavy volume (~1.8x avg)
 
-**2 · Lean** · INFERRED
-**neutral / range (INFERRED)** · conviction **med**
+**2 | Lean** | INFERRED
+**neutral / range (INFERRED)** | conviction **med**
 
-**3 · Catalysts** · PROBABLE
-• Range break with expanding volume
-• Catalyst calendar (earnings / product / event)
-• Technology leadership change that pulls the name
+**3 | Catalysts** | PROBABLE
+- Range break with expanding volume
+- Catalyst calendar (earnings / product / event)
+- Technology leadership change that pulls the name
 
-**4 · Risks** · PROBABLE
-• Whipsaw inside the range
-• Low-liquidity fake break
-• Macro headline risk that rewrites the tape
+**4 | Risks** | PROBABLE
+- Whipsaw inside the range
+- Low-liquidity fake break
+- Macro headline risk that rewrites the tape
 
 **Invalidation**
 Two closes outside $194.96-$207.02 (demo band)

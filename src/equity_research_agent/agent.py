@@ -1,8 +1,8 @@
 """
 Natural-language research agent.
 
-Production shape: user chats in Discord DMs → LLM ReAct loop → tool registry
-(charts, fundamentals, SEC, thesis, …) → answer.
+Production shape: user chats in Discord DMs -> LLM ReAct loop -> tool registry
+(charts, fundamentals, SEC, thesis, ...) -> answer.
 
 This public package keeps the same interaction model with a lightweight local
 agent: classify intent from the user message, run the matching tools, compose
@@ -146,21 +146,21 @@ def _format_tool_footer(calls: list[dict[str, Any]]) -> str:
 
 def _help_text() -> str:
     lines = [
-        "I'm a **stock research** bot. Talk to me in normal language — I run tools for you.",
+        "I'm a **stock research** bot. Talk to me in normal language - I run tools for you.",
         "",
         "Examples:",
-        "• `research AAPL`",
-        "• `what do you think about NVDA?`",
-        "• `levels on TSLA`",
-        "• `risk for MSFT`",
-        "• `help`",
+        "- `research AAPL`",
+        "- `what do you think about NVDA?`",
+        "- `levels on TSLA`",
+        "- `risk for MSFT`",
+        "- `help`",
         "",
         "Tools I can run:",
     ]
     for name, spec in TOOLS.items():
         if name == "list_tools":
             continue
-        lines.append(f"• **{name}** — {spec.description}")
+        lines.append(f"- **{name}** - {spec.description}")
     lines.append("")
     lines.append(
         "This public package uses an offline demo research engine (deterministic). "
@@ -170,7 +170,7 @@ def _help_text() -> str:
 
 
 def run_turn(user_text: str) -> AgentTurnResult:
-    """One NL research turn: intent → tools → answer."""
+    """One NL research turn: intent -> tools -> answer."""
     text = (user_text or "").strip()
     intent = classify_intent(text)
     tickers = extract_tickers(text)
@@ -195,9 +195,9 @@ def run_turn(user_text: str) -> AgentTurnResult:
         return AgentTurnResult(
             text=(
                 "I need a ticker. Try:\n"
-                "• `research AAPL`\n"
-                "• `levels on NVDA`\n"
-                "• `risk for TSLA`"
+                "- `research AAPL`\n"
+                "- `levels on NVDA`\n"
+                "- `risk for TSLA`"
             ),
             intent=intent,
             tickers=tickers,
