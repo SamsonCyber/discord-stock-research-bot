@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import html
 import json
 from pathlib import Path
 
@@ -26,97 +25,8 @@ def main() -> None:
         text = run_turn(msg).text.rstrip() + "\n"
         (SAMPLES / name).write_text(text, encoding="utf-8")
 
-    aapl = run_turn("research AAPL").text
+    # Front door proof is plain text (README + docs/samples), not a screenshot SVG.
     brief = research_brief("AAPL")
-    # GitHub (and most SVG sanitizers) strip foreignObject / XHTML. Render
-    # engine output as pure <text> so the DM mock is real, not empty chrome.
-    body_lines = aapl.splitlines()
-    line_h = 15.2
-    body_pad_top = 14
-    body_pad_bot = 18
-    body_h = max(360, int(body_pad_top + len(body_lines) * line_h + body_pad_bot))
-    panel_top = 70
-    panel_h = 48 + 90 + 40 + body_h + 28  # title + user + bot head + body + pad
-    svg_h = panel_top + panel_h + 40
-    body_y0 = panel_top + 48 + 90 + 40  # start of reply card
-    text_nodes: list[str] = []
-    y = body_y0 + body_pad_top + 12
-    for raw in body_lines:
-        # Keep Discord markdown markers visible (matches CLI/sample), escape XML.
-        safe = html.escape(raw) if raw else " "
-        # Section headers / tags get a slight accent; body stays Discord gray.
-        fill = "#e2e8f0"
-        weight = "600" if raw.startswith("**") else "400"
-        if raw.startswith("_") or raw.startswith("`"):
-            fill = "#94a3b8"
-            weight = "400"
-        if "INFERRED" in raw or "VERIFIED" in raw or "PROBABLE" in raw:
-            fill = "#cbd5e1"
-        text_nodes.append(
-            f'<text x="128" y="{y:.1f}" fill="{fill}" '
-            f'font-family="Consolas, ui-monospace, monospace" font-size="12.5" '
-            f'font-weight="{weight}">{safe}</text>'
-        )
-        y += line_h
-    body_svg = "\n    ".join(text_nodes)
-
-    svg = f"""<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 {svg_h}" role="img" aria-label="Discord DM research demo: research AAPL structured brief">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0c0e16"/>
-      <stop offset="50%" stop-color="#12141f"/>
-      <stop offset="100%" stop-color="#0b1020"/>
-    </linearGradient>
-    <linearGradient id="blurble" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#5865F2"/>
-      <stop offset="100%" stop-color="#00D4FF"/>
-    </linearGradient>
-    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000" flood-opacity="0.45"/>
-    </filter>
-    <clipPath id="round">
-      <rect x="40" y="{panel_top}" width="900" height="{panel_h}" rx="18"/>
-    </clipPath>
-  </defs>
-  <rect width="980" height="{svg_h}" fill="url(#bg)"/>
-  <circle cx="120" cy="80" r="160" fill="#5865F2" opacity="0.12"/>
-  <circle cx="860" cy="{svg_h - 80}" r="200" fill="#00D4FF" opacity="0.08"/>
-
-  <text x="48" y="42" fill="#f1f5f9" font-family="Segoe UI, system-ui, sans-serif" font-size="22" font-weight="700">
-    Natural language. Tools run. Research lands.
-  </text>
-  <text x="48" y="62" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="13">
-    Offline demo engine | deterministic | no API keys | same path as CLI
-  </text>
-
-  <g filter="url(#soft)" clip-path="url(#round)">
-    <rect x="40" y="{panel_top}" width="900" height="{panel_h}" rx="18" fill="#313338"/>
-    <rect x="40" y="{panel_top}" width="900" height="48" fill="#2b2d31"/>
-    <circle cx="68" cy="{panel_top + 24}" r="12" fill="#5865F2"/>
-    <text x="88" y="{panel_top + 29}" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="15" font-weight="700">Research Bot</text>
-    <text x="200" y="{panel_top + 29}" fill="#b5bac1" font-family="Segoe UI, system-ui, sans-serif" font-size="12">Direct Message | allowlisted</text>
-    <text x="900" y="{panel_top + 29}" text-anchor="end" fill="#23a559" font-family="Segoe UI, system-ui, sans-serif" font-size="12">online</text>
-
-    <circle cx="78" cy="{panel_top + 90}" r="18" fill="#ed4245"/>
-    <text x="78" y="{panel_top + 95}" text-anchor="middle" fill="#fff" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="700">U</text>
-    <text x="110" y="{panel_top + 82}" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">you</text>
-    <text x="150" y="{panel_top + 82}" fill="#949ba4" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Today at 9:41 AM</text>
-    <text x="110" y="{panel_top + 106}" fill="#dbdee1" font-family="Segoe UI, system-ui, sans-serif" font-size="15">research AAPL</text>
-
-    <circle cx="78" cy="{panel_top + 160}" r="18" fill="url(#blurble)"/>
-    <text x="78" y="{panel_top + 165}" text-anchor="middle" fill="#0b1020" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="800">RB</text>
-    <text x="110" y="{panel_top + 152}" fill="#f2f3f5" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">Research Bot</text>
-    <text x="220" y="{panel_top + 152}" fill="#5865F2" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="700">APP</text>
-    <text x="255" y="{panel_top + 152}" fill="#949ba4" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Today at 9:41 AM</text>
-
-    <rect x="110" y="{body_y0}" width="780" height="{body_h}" rx="8" fill="#2b2d31"/>
-    <rect x="110" y="{body_y0}" width="6" height="{body_h}" rx="3" fill="url(#blurble)"/>
-    {body_svg}
-  </g>
-</svg>
-"""
-    (ASSETS / "hero-discord.svg").write_text(svg, encoding="utf-8")
 
     banner = f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">

@@ -105,26 +105,16 @@ def test_package_has_no_forbidden_imports() -> None:
 
 
 def test_showcase_assets_exist() -> None:
-    """GitHub front door needs in-repo visual + sample reply without running a server."""
+    """Front door is real engine text + samples, not a screenshot mock."""
     root = Path(__file__).resolve().parents[1]
     for rel in (
         "assets/architecture.svg",
-        "assets/hero-discord.svg",
         "assets/banner.svg",
         "assets/interactive-demo.html",
         "docs/samples/aapl-research.txt",
     ):
         path = root / rel
         assert path.is_file(), f"missing {rel}"
-    hero = (root / "assets" / "hero-discord.svg").read_text(encoding="utf-8")
-    assert "<svg" in hero
-    assert "research AAPL" in hero
-    # GitHub strips foreignObject - body must be pure SVG text from the engine
-    assert "foreignObject" not in hero
-    assert "AAPL | research" in hero or "AAPL &#183; research" in hero or "AAPL" in hero
-    assert "offline-demo" in hero
-    assert "tools used" in hero.lower()
-    assert "range-bound" in hero  # live engine phrase, not empty chrome
     demo = (root / "assets" / "interactive-demo.html").read_text(encoding="utf-8")
     assert "const DATA" in demo
     assert "AAPL" in demo
@@ -134,6 +124,13 @@ def test_showcase_assets_exist() -> None:
     assert "Technology" in body
     assert "tools used" in body.lower()
     assert "offline-demo" in body
+    assert "AAPL | research" in body
+    # README embeds the sample as text (not a Discord screenshot image)
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    assert "hero-discord.svg" not in readme
+    assert "AAPL | research" in readme
+    assert "range-bound" in readme
+    assert "python -m equity_research_agent.demo research AAPL" in readme
 
 
 def test_sample_reply_matches_live_demo_engine() -> None:
@@ -197,7 +194,6 @@ def test_agent_text_is_production_shaped_markdown() -> None:
 def test_readme_points_at_showcase_assets() -> None:
     root = Path(__file__).resolve().parents[1]
     readme = (root / "README.md").read_text(encoding="utf-8")
-    assert "assets/hero-discord.svg" in readme
     assert "assets/banner.svg" in readme
     assert "assets/interactive-demo.html" in readme
     assert "assets/architecture.svg" in readme
@@ -205,6 +201,8 @@ def test_readme_points_at_showcase_assets() -> None:
     assert "docs/PRODUCTION_TOOLS.md" in readme
     assert "python -m equity_research_agent.demo" in readme
     assert "scripts/build_showcase.py" in readme
+    # Proof is text from the engine, not a hero screenshot SVG
+    assert "hero-discord.svg" not in readme
 
 
 def test_source_has_no_lab_markers() -> None:
