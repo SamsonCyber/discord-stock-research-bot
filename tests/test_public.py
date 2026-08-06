@@ -9,9 +9,42 @@ import pytest
 
 from equity_research_agent.agent import classify_intent, extract_tickers, run_turn
 from equity_research_agent.auth import is_allowed
-from equity_research_agent.research import research_brief
+from equity_research_agent.research import research_brief, session_aware_quote, us_equity_session
 
 PKG = Path(__file__).resolve().parents[1] / "src" / "equity_research_agent"
+
+# Freeze US session so tape labels and samples are deterministic in CI.
+_FIXED_SESSION = {
+    "phase": "afterhours",
+    "is_rth": False,
+    "is_extended_hours": True,
+    "et_now": "2026-08-05 17:30:00 EDT",
+    "weekday": "Wednesday",
+    "windows_et": {
+        "premarket": "04:00-09:30",
+        "rth": "09:30-16:00",
+        "afterhours": "16:00-20:00",
+    },
+    "note": (
+        "Demo session clock only. Public package has no live quotes; "
+        "production deployments wire live pre/post market fields the same way."
+    ),
+}
+
+
+@pytest.fixture(autouse=True)
+def _freeze_afterhours_session(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _fixed(_now=None):
+        return dict(_FIXED_SESSION)
+
+    monkeypatch.setattr(
+        "equity_research_agent.research.us_equity_session",
+        _fixed,
+    )
+    monkeypatch.setattr(
+        "equity_research_agent.tools.us_equity_session",
+        _fixed,
+    )
 
 FORBIDDEN_IMPORT_ROOTS = frozenset(
     {
@@ -63,16 +96,40 @@ def test_nl_help() -> None:
 def test_extract_tickers_skips_noise() -> None:
     assert extract_tickers("what do you think about AAPL?") == ["AAPL"]
     assert "WHAT" not in extract_tickers("what about MSFT")
+    assert "HOURS" not in extract_tickers("after hours pricing")
+    assert extract_tickers("after hours AAPL") == ["AAPL"]
 
 
 def test_research_stable() -> None:
     assert research_brief("AAPL").as_dict() == research_brief("aapl").as_dict()
 
 
+def test_session_aware_quote_afterhours_fields() -> None:
+    q = session_aware_quote("AAPL")
+    assert q["price_label"] == "AFTER-HOURS"
+    assert q["price_session"] == "afterhours"
+    assert q["current_price"] == q["post_market_price"]
+    assert q["regular_market_price"] is not None
+    assert q["previous_close"] is not None
+    brief = research_brief("AAPL")
+    assert "AFTER-HOURS" in brief.format_message()
+    assert "session-aware" in brief.format_message()
+    assert "RTH regular" in brief.format_message()
+
+
+def test_session_tool_turn() -> None:
+    result = run_turn("is market open")
+    assert result.intent == "session"
+    assert result.tool_calls and result.tool_calls[0]["name"] == "session"
+    assert "afterhours" in result.text.lower() or "AFTER-HOURS" in result.text or "Phase" in result.text
+
+
 def test_classify_intent() -> None:
     assert classify_intent("levels on AAPL") == "levels"
     assert classify_intent("risk for AAPL") == "risk"
     assert classify_intent("research AAPL") == "research"
+    assert classify_intent("session") == "session"
+    assert classify_intent("after hours?") == "session"
 
 
 def test_empty_allowlist_denies(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -4,8 +4,8 @@
 **Read** | INFERRED
 Apple (AAPL) is range-bound in this offline model. No edge until a clean break with volume. Size small or wait; fake breaks are the default.
 
-**1 | Tape** | VERIFIED (demo OHLCV)
-Last **$200.99** (-1.75%) | heavy volume (~1.8x avg)
+**1 | Tape** | VERIFIED (demo OHLCV, session-aware)
+AFTER-HOURS **$203.57** (+1.78% vs prior close) | RTH regular **$200.99** (ext vs RTH +1.28%) | volume ~1.5x avg
 
 **2 | Lean** | INFERRED
 **neutral / range (INFERRED)** | conviction **med**
@@ -21,7 +21,7 @@ Last **$200.99** (-1.75%) | heavy volume (~1.8x avg)
 - Macro headline risk that rewrites the tape
 
 **Invalidation**
-Two closes outside $194.96-$207.02 (demo band)
+Two closes outside $197.46-$209.68 (demo band)
 
 _Demo research data only. Offline / deterministic. Not live market data. Not financial advice._
 

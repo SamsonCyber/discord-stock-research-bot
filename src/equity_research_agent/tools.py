@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from .research import level_map, research_brief, risk_snapshot
+from .research import level_map, research_brief, risk_snapshot, us_equity_session
 
 
 @dataclass(frozen=True)
@@ -31,6 +31,11 @@ def _tool_levels(ticker: str) -> dict[str, Any]:
 
 def _tool_risk(ticker: str) -> dict[str, Any]:
     return risk_snapshot(ticker).as_dict()
+
+
+def _tool_session() -> dict[str, Any]:
+    """US equity session clock (premarket / RTH / after-hours)."""
+    return us_equity_session()
 
 
 def _tool_list_tools() -> dict[str, Any]:
@@ -58,6 +63,11 @@ TOOLS: dict[str, ToolSpec] = {
         name="risk",
         description="Risk snapshot: ATR%, beta, demo stop, risk per share",
         handler=_tool_risk,
+    ),
+    "session": ToolSpec(
+        name="session",
+        description="US equity session phase: premarket, RTH, after-hours, closed, weekend",
+        handler=_tool_session,
     ),
     "list_tools": ToolSpec(
         name="list_tools",

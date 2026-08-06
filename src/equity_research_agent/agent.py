@@ -87,6 +87,19 @@ _STOP = frozenset(
         "COMPARE",
         "VS",
         "VERSUS",
+        # Session English (after hours != ticker HOURS)
+        "HOUR",
+        "HOURS",
+        "AFTER",
+        "PREMARKET",
+        "AFTERHOURS",
+        "SESSION",
+        "MARKET",
+        "OPEN",
+        "CLOSE",
+        "RTH",
+        "AH",
+        "PM",
     }
 )
 
@@ -126,6 +139,12 @@ def classify_intent(text: str) -> str:
         return "empty"
     if raw in {"help", "?", "tools", "list tools", "what can you do"}:
         return "help"
+    if re.search(
+        r"\b(session|market\s+hours|after[\s-]?hours|pre[\s-]?market|"
+        r"is\s+(the\s+)?market\s+open|are\s+we\s+rth)\b",
+        raw,
+    ):
+        return "session"
     if re.search(r"\b(level|levels|support|resistance|pivot)\b", raw):
         return "levels"
     if re.search(r"\b(risk|atr|stop|sizing|beta)\b", raw):
@@ -153,6 +172,7 @@ def _help_text() -> str:
         "- `what do you think about NVDA?`",
         "- `levels on TSLA`",
         "- `risk for MSFT`",
+        "- `is market open` / `session`",
         "- `help`",
         "",
         "Tools I can run:",
@@ -187,6 +207,33 @@ def run_turn(user_text: str) -> AgentTurnResult:
         run_tool("list_tools")
         return AgentTurnResult(
             text=_help_text(),
+            tool_calls=calls,
+            intent=intent,
+        )
+
+    if intent == "session":
+        calls.append({"name": "session", "args": {}})
+        sess = run_tool("session")
+        phase = str(sess.get("phase") or "unknown")
+        et = str(sess.get("et_now") or "")
+        windows = sess.get("windows_et") or {}
+        lines = [
+            "**US equity session** | VERIFIED (clock ET)",
+            f"Phase: **{phase}**",
+            f"Now: `{et}`",
+            (
+                f"Windows ET: premarket {windows.get('premarket', '?')}, "
+                f"RTH {windows.get('rth', '?')}, "
+                f"after-hours {windows.get('afterhours', '?')}"
+            ),
+            "",
+            "Tape on research cards labels **RTH** / **PRE-MARKET** / **AFTER-HOURS** "
+            "so extended prints are not confused with the cash close.",
+            "",
+            f"_{sess.get('note') or 'Session clock only.'}_",
+        ]
+        return AgentTurnResult(
+            text="\n".join(lines) + _format_tool_footer(calls),
             tool_calls=calls,
             intent=intent,
         )
