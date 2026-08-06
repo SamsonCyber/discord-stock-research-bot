@@ -1,13 +1,21 @@
-"""Offline stock research helpers (deterministic demo data, no market APIs)."""
+"""Offline stock research helpers (deterministic demo data, no market APIs).
+
+Includes US equity session awareness (premarket / RTH / after-hours) so tape
+lines label which print is being shown. Prices stay offline-demo (no yfinance).
+"""
 
 from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass
+from datetime import datetime, time
+from typing import Any
+from zoneinfo import ZoneInfo
 
 import numpy as np
 
 _TICKER_RE = re.compile(r"^[A-Za-z][A-Za-z0-9.\-]{0,9}$")
+_ET = ZoneInfo("America/New_York")
 
 SECTORS = (
     "Technology",
@@ -58,7 +66,7 @@ def _rng_for(ticker: str, salt: int = 0) -> np.random.Generator:
 
 
 def _ref_price(ticker: str) -> float:
-    """Shared reference price so brief / levels / risk agree on the same symbol."""
+    """Shared RTH reference price so brief / levels / risk agree on the same symbol."""
     known = _KNOWN.get(ticker.upper())
     if known and isinstance(known.get("base"), (int, float)):
         base = float(known["base"])
@@ -66,6 +74,141 @@ def _ref_price(ticker: str) -> float:
         wobble = float(_rng_for(ticker, 0).uniform(0.97, 1.03))
         return base * wobble
     return float(_rng_for(ticker, 0).uniform(15, 420))
+
+
+def us_equity_session(now: datetime | None = None) -> dict[str, Any]:
+    """US cash equity session phase in America/New_York.
+
+    Phases: weekend | closed | premarket | rth | afterhours
+    Extended hours windows: 04:00-09:30 premarket, 16:00-20:00 afterhours (ET).
+    """
+    now = now or datetime.now(_ET)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=_ET)
+    else:
+        now = now.astimezone(_ET)
+    t = now.time()
+    wd = now.weekday()
+    if wd >= 5:
+        phase = "weekend"
+        is_rth = False
+        is_extended = False
+    elif time(4, 0) <= t < time(9, 30):
+        phase = "premarket"
+        is_rth = False
+        is_extended = True
+    elif time(9, 30) <= t < time(16, 0):
+        phase = "rth"
+        is_rth = True
+        is_extended = False
+    elif time(16, 0) <= t < time(20, 0):
+        phase = "afterhours"
+        is_rth = False
+        is_extended = True
+    else:
+        phase = "closed"
+        is_rth = False
+        is_extended = False
+    return {
+        "phase": phase,
+        "is_rth": is_rth,
+        "is_extended_hours": is_extended,
+        "et_now": now.strftime("%Y-%m-%d %H:%M:%S %Z"),
+        "weekday": now.strftime("%A"),
+        "windows_et": {
+            "premarket": "04:00-09:30",
+            "rth": "09:30-16:00",
+            "afterhours": "16:00-20:00",
+        },
+        "note": (
+            "Demo session clock only. Public package has no live quotes; "
+            "production deployments wire live pre/post market fields the same way."
+        ),
+    }
+
+
+def session_aware_quote(ticker: str, now: datetime | None = None) -> dict[str, Any]:
+    """Deterministic demo quote with RTH + pre/post market prints.
+
+    Mirrors production field names so agents learn to label AFTER-HOURS /
+    PRE-MARKET instead of treating the last RTH close as 'current' forever.
+    """
+    symbol = normalize_ticker(ticker)
+    sess = us_equity_session(now)
+    phase = str(sess["phase"])
+    regular = round(_ref_price(symbol), 2)
+    rng = _rng_for(symbol, 11)
+    previous_close = round(regular / float(rng.uniform(0.992, 1.012)), 2)
+    pre = round(regular * float(rng.uniform(0.994, 1.01)), 2)
+    post = round(regular * float(rng.uniform(0.99, 1.015)), 2)
+
+    # Which print is 'current' for this session
+    if phase == "premarket":
+        live, price_session, label = pre, "premarket", "PRE-MARKET"
+    elif phase in {"afterhours", "closed"}:
+        # After 20:00 ET still surface last AH print when we have one
+        live, price_session, label = post, "afterhours", "AFTER-HOURS"
+    elif phase == "weekend":
+        live, price_session, label = post, "afterhours", "AFTER-HOURS"
+    else:
+        live, price_session, label = regular, "rth", "RTH"
+
+    change_pct = (
+        round(((live - previous_close) / previous_close) * 100.0, 2)
+        if previous_close
+        else 0.0
+    )
+    rth_change_pct = (
+        round(((regular - previous_close) / previous_close) * 100.0, 2)
+        if previous_close
+        else 0.0
+    )
+    extended_vs_rth_pct = (
+        round(((live - regular) / regular) * 100.0, 2)
+        if regular and price_session != "rth"
+        else None
+    )
+    return {
+        "ticker": symbol,
+        "session": sess,
+        "price_session": price_session,
+        "price_label": label,
+        "current_price": live,
+        "regular_market_price": regular,
+        "previous_close": previous_close,
+        "pre_market_price": pre,
+        "post_market_price": post,
+        "change_pct": change_pct,
+        "rth_change_pct": rth_change_pct,
+        "extended_vs_rth_pct": extended_vs_rth_pct,
+        "mode": "offline-demo",
+        "note": (
+            f"{label} print is the session-aware current price. "
+            "regular_market_price is the last RTH print. "
+            "change_pct is vs previous close."
+        ),
+    }
+
+
+def _tape_line(quote: dict[str, Any], volume_vs_avg: float | None = None) -> str:
+    """One Discord tape line with session label."""
+    label = str(quote.get("price_label") or "RTH")
+    live = float(quote["current_price"])
+    chg = float(quote.get("change_pct") or 0.0)
+    chg_s = f"{chg:+.2f}%"
+    reg = quote.get("regular_market_price")
+    ext = quote.get("extended_vs_rth_pct")
+    vol = ""
+    if volume_vs_avg is not None:
+        vol = _vol_note(float(volume_vs_avg))
+    if label in {"AFTER-HOURS", "PRE-MARKET"}:
+        extra = ""
+        if reg is not None:
+            extra = f" | RTH regular **${float(reg):.2f}**"
+            if ext is not None:
+                extra += f" (ext vs RTH {float(ext):+.2f}%)"
+        return f"{label} **${live:.2f}** ({chg_s} vs prior close){extra}{vol}"
+    return f"Last **${live:.2f}** (RTH) ({chg_s}){vol}"
 
 
 def _company_meta(ticker: str) -> tuple[str, str]:
@@ -138,6 +281,14 @@ class ResearchBrief:
     risks: list[str]
     invalidation: str
     disclaimer: str
+    price_session: str = "rth"
+    price_label: str = "RTH"
+    regular_market_price: float | None = None
+    previous_close: float | None = None
+    pre_market_price: float | None = None
+    post_market_price: float | None = None
+    extended_vs_rth_pct: float | None = None
+    tape_line: str = ""
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -146,10 +297,14 @@ class ResearchBrief:
         """Discord markdown research reply (production agent shape).
 
         Summary-first sections + epistemic tags. Plain words only - no bars
-        or sparkline cosplay.
+        or sparkline cosplay. Tape line labels AFTER-HOURS / PRE-MARKET when
+        outside RTH so demo agents practice session-aware pricing.
         """
-        chg_s = f"{self.change_pct:+.2f}%"
         conv = _conviction_word(self.conviction)
+        tape = self.tape_line or (
+            f"Last **${self.last_price:.2f}** ({self.change_pct:+.2f}%)"
+            f"{_vol_note(self.volume_vs_avg)}"
+        )
         lines: list[str] = [
             f"**{self.ticker} | research**",
             f"`as_of {self.mode}` | {self.company} | {self.sector} | paper research only",
@@ -157,8 +312,8 @@ class ResearchBrief:
             "**Read** | INFERRED",
             self.thesis,
             "",
-            "**1 | Tape** | VERIFIED (demo OHLCV)",
-            f"Last **${self.last_price:.2f}** ({chg_s}){_vol_note(self.volume_vs_avg)}",
+            "**1 | Tape** | VERIFIED (demo OHLCV, session-aware)",
+            tape,
             "",
             "**2 | Lean** | INFERRED",
             f"**{_lean_tag(self.bias)}** | conviction **{conv}**",
@@ -200,6 +355,8 @@ class LevelMap:
     resistances: list[float]
     pivot: float
     disclaimer: str
+    price_label: str = "RTH"
+    tape_line: str = ""
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -212,13 +369,14 @@ class LevelMap:
         room_dn = (self.last_price - nearest_s) / self.last_price * 100.0
         s_str = ", ".join(f"${s:.2f}" for s in sorted(self.supports, reverse=True))
         r_str = ", ".join(f"${r:.2f}" for r in sorted(self.resistances))
+        px_note = self.tape_line or f"**${self.last_price:.2f}** ({self.price_label})"
         lines = [
             f"**{self.ticker} | levels**",
             f"`as_of {self.mode}` | {self.company} | paper research only",
             "",
             "**Take** | INFERRED",
             (
-                f"Price sits near **${self.last_price:.2f}** with pivot **${self.pivot:.2f}**. "
+                f"Price sits near {px_note} with pivot **${self.pivot:.2f}**. "
                 f"Nearest resistance **${nearest_r:.2f}** (+{room_up:.1f}%); "
                 f"nearest support **${nearest_s:.2f}** (-{room_dn:.1f}%)."
             ),
@@ -259,6 +417,8 @@ class RiskSnapshot:
     r_multiple_1r: float
     position_note: str
     disclaimer: str
+    price_label: str = "RTH"
+    tape_line: str = ""
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -272,13 +432,14 @@ class RiskSnapshot:
         else:
             heat = "normal"
         risk_pct = self.risk_per_share / self.last_price * 100.0 if self.last_price else 0.0
+        px = self.tape_line or f"Last **${self.last_price:.2f}** ({self.price_label})"
         lines = [
             f"**{self.ticker} | risk**",
             f"`as_of {self.mode}` | {self.company} | paper research only",
             "",
             "**Read** | INFERRED",
             (
-                f"Last **${self.last_price:.2f}**. ATR **{self.atr_pct:.2f}%** ({heat}), "
+                f"{px}. ATR **{self.atr_pct:.2f}%** ({heat}), "
                 f"beta **{self.beta:.2f}**. Demo stop **${self.suggested_stop:.2f}** "
                 f"(~{risk_pct:.1f}% risk/share); 1R target **${self.r_multiple_1r:.2f}**."
             ),
@@ -300,13 +461,14 @@ class RiskSnapshot:
         }
 
 
-def research_brief(ticker: str) -> ResearchBrief:
+def research_brief(ticker: str, now: datetime | None = None) -> ResearchBrief:
     symbol = normalize_ticker(ticker)
     company, sector = _company_meta(symbol)
     rng = _rng_for(symbol, 1)
-    last = _ref_price(symbol)
-    change = float(rng.normal(0.2, 1.8))
-    # Known names lean constructive so the public demo doesn't look random-garbage.
+    quote = session_aware_quote(symbol, now=now)
+    last = float(quote["current_price"])
+    change = float(quote["change_pct"])
+    # Known names lean constructive so the public demo does not look random-garbage.
     if symbol in _KNOWN:
         weights = np.array([0.55, 0.25, 0.20])  # bullish, neutral, bearish
         bias = str(rng.choice(BIASES, p=weights / weights.sum()))
@@ -314,6 +476,7 @@ def research_brief(ticker: str) -> ResearchBrief:
         bias = BIASES[int(rng.integers(0, len(BIASES)))]
     conviction = int(rng.integers(2, 6))
     vol = float(rng.uniform(0.6, 2.4))
+    tape = _tape_line(quote, vol)
 
     if bias == "bullish":
         thesis = (
@@ -382,14 +545,23 @@ def research_brief(ticker: str) -> ResearchBrief:
         risks=risks,
         invalidation=invalidation,
         disclaimer=_DISCLAIMER,
+        price_session=str(quote["price_session"]),
+        price_label=str(quote["price_label"]),
+        regular_market_price=quote.get("regular_market_price"),
+        previous_close=quote.get("previous_close"),
+        pre_market_price=quote.get("pre_market_price"),
+        post_market_price=quote.get("post_market_price"),
+        extended_vs_rth_pct=quote.get("extended_vs_rth_pct"),
+        tape_line=tape,
     )
 
 
-def level_map(ticker: str) -> LevelMap:
+def level_map(ticker: str, now: datetime | None = None) -> LevelMap:
     symbol = normalize_ticker(ticker)
     company, _sector = _company_meta(symbol)
     rng = _rng_for(symbol, 2)
-    last = _ref_price(symbol)
+    quote = session_aware_quote(symbol, now=now)
+    last = float(quote["current_price"])
     step = last * float(rng.uniform(0.015, 0.04))
     supports = [round(last - step * k, 2) for k in (1, 2, 3)]
     resistances = [round(last + step * k, 2) for k in (1, 2, 3)]
@@ -403,14 +575,17 @@ def level_map(ticker: str) -> LevelMap:
         resistances=resistances,
         pivot=pivot,
         disclaimer=_DISCLAIMER,
+        price_label=str(quote["price_label"]),
+        tape_line=_tape_line(quote),
     )
 
 
-def risk_snapshot(ticker: str) -> RiskSnapshot:
+def risk_snapshot(ticker: str, now: datetime | None = None) -> RiskSnapshot:
     symbol = normalize_ticker(ticker)
     company, _sector = _company_meta(symbol)
     rng = _rng_for(symbol, 3)
-    last = _ref_price(symbol)
+    quote = session_aware_quote(symbol, now=now)
+    last = float(quote["current_price"])
     atr_pct = float(rng.uniform(1.2, 5.5))
     beta = float(rng.uniform(0.7, 1.8))
     stop = last * (1.0 - atr_pct / 100.0 * 1.5)
@@ -432,6 +607,8 @@ def risk_snapshot(ticker: str) -> RiskSnapshot:
         r_multiple_1r=round(r1, 2),
         position_note=note,
         disclaimer=_DISCLAIMER,
+        price_label=str(quote["price_label"]),
+        tape_line=_tape_line(quote),
     )
 
 
@@ -441,10 +618,12 @@ Talk in natural language (preferred):
 - `research AAPL`
 - `levels on NVDA`
 - `risk for TSLA`
+- `session` / `is market open`
 - `help`
 
-This public package uses an **offline demo research engine** (deterministic per ticker).
-Wire your own market-data and model backends for production research.
+This public package uses an **offline demo research engine** (deterministic per ticker)
+with **session-aware** tape labels (RTH / PRE-MARKET / AFTER-HOURS).
+Wire live market-data backends for production research.
 
 Not financial advice. Allowlisted users only.
 """
